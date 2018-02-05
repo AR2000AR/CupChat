@@ -74,11 +74,13 @@ def reciveMsg(socket,buffersize=1024,log=False,maxAttemp=1,theType=bytes):
                 else:
                     raise TypeError("theType must be bytes or str not "+str(theType))
             else:
-                log.write("DISCONNECTED","The server closed the connection")
+                if log != False:
+                  log.write("DISCONNECTED","The server closed the connection")
                 return False
         except timeout as error:
             t=t+1
-            log.write("TRANSMITION_ERROR","Timeout")
+            if log != False:
+              log.write("TRANSMITION_ERROR","Timeout")
             if theType==bytes:
                 return b''
             elif theType==str:

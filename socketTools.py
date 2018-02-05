@@ -23,7 +23,7 @@ def serverAccept(socket,log=False):
         pass
 #----------------------------------------
 #----------------------------------------
-def clientConnect(ip,port,log=False,test=False,maxAttemp=1):
+def clientConnect(ip="ask",port="ask",log=False,test=False,maxAttemp=1):
     if ip == "ask":
         ip=input("Connect to : ")
     if port == "ask":

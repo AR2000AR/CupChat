@@ -10,7 +10,8 @@ from socket import *
 #DEFINITION DES FONCTIONS==================
 def serverAccept(socket,log=False):
     "wait until timeout or accept one connection if avaliable"
-    log.write("INFO","Waiting for a client to connect...")
+    if log != False:
+      log.write("INFO","Waiting for a client to connect...")
     try:
         socket.listen(1)
         client, adresse = socket.accept()

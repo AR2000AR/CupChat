@@ -5,7 +5,7 @@
 #IMPORTATIONS DES LIBRAIRIES ET MODULES====
 import socket
 #INITIALISATION DES VARIABLES==============
-VERTION = "0.1"
+VERSION = "0.1"
 #DEFINITION DES FONCTIONS==================
 def myip():
     "return the local ip"

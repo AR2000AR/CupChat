@@ -32,6 +32,7 @@ def clientConnect(ip="ask",port="ask",log=False,test=False,maxAttemp=1):
             i = input("Port : ")
             try:
                 port = int(i)
+                break
             except ValueError:
                 print("Port must be a number")
     ############################################

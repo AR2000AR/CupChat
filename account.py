@@ -2,6 +2,7 @@
 #By Rémi Audrézet           #
 #############################
 import os
+import hashlib
 #============================
 class Account():
     def __init__(self,file=""):
@@ -14,11 +15,11 @@ class Account():
             self._file=file
 
     def check(self,name,password):
-        with open(file,"r") as db:
+        with open(self._file,"r") as db:
             for item in db:
                 item=item.split(";")
                 if item[0]==name:
-                    if item[1]==password:
+                    if item[1]==hashlib.md5(password.encode()).hexdigest():
                         return True
                     else:
                         return False
@@ -26,7 +27,7 @@ class Account():
                     return False
         
     def exist(self,name):
-        with open(file,"r") as db:
+        with open(self._file,"r") as db:
             for item in db:
                 item=item.split(";")
                 if item[0]==name:
@@ -35,13 +36,15 @@ class Account():
                     return False
 
     def create(self,name,password):
-        if exits(name)==True:
+        if self.exist(name)==True:
             return False
         else:
-            with open(file,"a") as db:
-                db.write(name+";"+password+"\n")
+            with open(self._file,"a") as db:
+                db.write(name+";"+hashlib.md5(password.encode()).hexdigest()+"\n")
 
     def statu(self):
         if self._file=="":
             return "No file"
+        else:
+            return "OK"
                 

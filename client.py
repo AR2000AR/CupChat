@@ -2,13 +2,16 @@ from socketTools import *
 from tkinter import *
 from tkinter.messagebox import *
 from socket import *
+from tools import *
 
+#test
+test=True
 
 #theme
 option_theme=0
 
 #taille de la fenêtre
-taille='900x700'
+taille='900x700'   #######quand il modifie la taille, la mémoriser avec event
 
 #nuit
 if option_theme==0:
@@ -29,9 +32,9 @@ create= False
 
 #variable d'erreur de connection
 wrong=0
-    
+
 def identification(auth,new):
-    app.geometry(taille) #######quand il modifie la taille, la mémorise avec event
+    
 ##  class def_gif(Label):
 ##      
 ##        def __init__(self, master, filename, speed): #définit speed 
@@ -69,8 +72,9 @@ def identification(auth,new):
 ##    gif.pack()
     #definition de la fenetre Tkinter
     app = Tk()
-    apptitle("tinytchat",)
+    app.title("tinytchat",)
     app['bg']=theme
+    app.geometry(taille)
     app.minsize(width=600, height=500)
     
     label_connect= Label(app, text="CONNECTION EN COURS ...", bg=theme,fg=ecriture, font="MV-Boli,80,bold" )
@@ -80,53 +84,59 @@ def identification(auth,new):
     app.mainloop()
     
 
-    #recevoir la confirmation du serveur
-    connect_accept=reciveMsg()
-
-    if new==1:
-        if connect_accept.find('DONE')>-1:
-            print(' compte créer avec succée') #######log
-            showinfo('votre compte à été créer !')
+    if test==True:
             app.destroy()
             appli()
             
-        if connect_accept.find('EXIST')>-1:
-            print('copmpte deja existant')#######log
-            print('Désolé ce compte exite déja')
-            wrong=1
-            app.destroy()
-            accueil()
+    if test==False:
+        #recevoir la confirmation du serveur
+        connect_accept=reciveMsg()
+        if new==1:
+            if connect_accept.find('DONE')>-1:
+                print(' compte créer avec succée') #######log
+                showinfo('votre compte à été créer !')
+                app.destroy()
+                appli()
+            
+            if connect_accept.find('EXIST')>-1:
+                print('copmpte deja existant')#######log
+                print('Désolé ce compte exite déja')
+                wrong=1
+                app.destroy()
+                accueil()
 
-    elif auth==1:
-        if connect_accept.find('<|ACCEPTED|>')>-1:
-            print('conection reussi !') #######log
-            app.destroy()
-            appli()
+        elif auth==1:
+            if connect_accept.find('<|ACCEPTED|>')>-1:
+                print('conection reussi !') #######log
+                app.destroy()
+                appli()
 
             
-        if connect_accept.find('<|REJECTED|>')>-1:
-            print("Erreur de mot de passe, ou de pseudo") #######log
-            wrong= 2
-            app.destroy()
-            accueil()
+            if connect_accept.find('<|REJECTED|>')>-1:
+                print("Erreur de mot de passe, ou de pseudo") #######log
+                wrong= 2
+                app.destroy()
+                accueil()
 
-    else :
-        print("il y a un probléme avec le serveur, en attendant jouer avec cattou") ######### cattou ?
+        else :
+            print("il y a un probléme avec le serveur, en attendant jouer avec cattou") ######### cattou ?
+
+
+#----------------------------------
 
 def accueil():
-app = Tk()
-apptitle("tinytchat",)
-app['bg']=theme
-app.minsize(width=600, height=500)
-app.geometry(taille) #######quand il modifie la taille, la mémoriser avec event
-
-#----------------------------------
-
-    client = clientConnect()
-    #172.18.144.187
-
-#----------------------------------
     
+    app = Tk()
+    app.title("tinytchat",)
+    app['bg']=theme
+    app.minsize(width=600, height=500)
+
+
+    if test==False:
+        client = clientConnect()
+        #172.18.144.187
+
+
     #titre principal page d'accueil et logo
     logo= PhotoImage(file=logo1)
 
@@ -134,12 +144,13 @@ app.geometry(taille) #######quand il modifie la taille, la mémoriser avec event
     titre.pack()
     titre.place(anchor=N ,relx=0.5, rely=0.1)
 
+
     #frame contenant la partie de l'identification
-    fa= Frame(fenetre_accueil, bg=theme)
+    fa= Frame(app, bg=theme)
     fa.pack()
     fa.place(anchor=N ,relx=0.5, rely=0.4)
     
-    if wrong==1:
+    if wrong==2:
         titre_erreur= Label(fa, text="Désolé ce compte exite déja", bg=theme,fg=Red ,  font="MV-Boli,bold", justify=LEFT,width= 30 )
         titre_erreur.pack()
 
@@ -153,12 +164,13 @@ app.geometry(taille) #######quand il modifie la taille, la mémoriser avec event
     fa3= Frame(fa, bg="#4b4e56", pady=2, padx=2)
     fa3.pack()
 
-    value = StringVar().set("")  #valeur rentrer par default
+    value = StringVar().set("")  #########valeur rentrer par default
     login = Entry(fa3, textvariable=value, width=30, font="MV-Boli,45,bold", relief=FLAT)
     login.pack()
 
     espace= Frame(fa, bg=theme, height=40)
     espace.pack()
+
 
     #le "mot de passe" en dessous
     titre_password= Label(fa, text="Mot de passe :", bg=theme,fg=ecriture,  font="MV-Boli,bold", justify=LEFT, width= 30 )
@@ -190,28 +202,32 @@ app.geometry(taille) #######quand il modifie la taille, la mémoriser avec event
     def id_create():
         disable()
         showinfo("Alerte", password.get()+"\n"+login.get() ) #####temporaire
-        client.send(bytes('<|ACCOUNT|>;<|CREATE|>;'+login.get()+";"+password.get(),"UTF-8"))
+
+        if test==False:
+            client.send(bytes('<|ACCOUNT|>;<|CREATE|>;'+login.get()+";"+password.get(),"UTF-8"))
+            
         app.destroy()
         new =1
         auth =0
-        identification(theme,ecriture,new)
+        identification(new,auth)
 
         #autentification
     def id_auth():
         disable()
         showinfo("Alerte", password.get()+"\n"+login.get() ) #####temporaire
-        client.send(bytes('<|ACCOUNT|>;<|AUTH|>;'+login.get()+";"+password.get(),"UTF-8"))
+        
+        if test==False:
+            client.send(bytes('<|ACCOUNT|>;<|AUTH|>;'+login.get()+";"+password.get(),"UTF-8"))
         app.destroy()
         auth =1
         new =0
-        identification(theme,ecriture,auth)
+        identification(auth,new)
 
     #desactive les boutons au moment de la connection
     def disable():
         bouton_valider.configure(state=DISABLED)
         bouton_créer.configure(state=DISABLED)
         bouton_quit.configure(state=DISABLED)
-    
     
 
     fbouton= Frame(fa, bg=theme, pady=30)
@@ -244,24 +260,39 @@ app.geometry(taille) #######quand il modifie la taille, la mémoriser avec event
 
     app.mainloop()
 
+#----------------------------------
+
 def appli():
     app = Tk()
-    app.geometry(taille) #######quand il modifie la taille, la mémoriser avec event
+    app.geometry(taille) 
     app['bg']=theme
     app.minsize(width=600, height=500)
     
+    app.bind('<Configure',taille_fenetre )
+
+
     app.mainloop()
+
+#----------------------------------
 
 def history():
     pass
 
+#----------------------------------
+
 def compte_enregistré() :
     pass
+
+#----------------------------------
+
+def taille_fenetre(event) :
+    pass
+
+#----------------------------------
 
 if __name__=="__main__":
     accueil()
 
-app.bind('<Enter>',enter1 )
 
 #--------------------------------
 

@@ -3,9 +3,11 @@ from tkinter import *
 from tkinter.messagebox import *
 from socket import *
 from tools import *
+from logger import *
 
+#INIT=================================================================
 #test
-test=True
+test=True      #désactive la connection au serveur pour le besoin des tests
 
 #theme
 option_theme=0
@@ -32,8 +34,9 @@ create= False
 
 #variable d'erreur de connection
 wrong=0
-
-def identification(auth,new):
+log=Log("log.txt",mode=LOG_REPLACE)#Ouvre le fichier de log
+#======================================================================
+def identification(new):
     
 ##  class def_gif(Label):
 ##      
@@ -90,37 +93,33 @@ def identification(auth,new):
             
     if test==False:
         #recevoir la confirmation du serveur
-        connect_accept=reciveMsg()
-        if new==1:
-            if connect_accept.find('DONE')>-1:
-                print(' compte créer avec succée') #######log
+        connect_accepte=reciveMsg(2048,the_type=str)
+        connect_accepte=connect_accept.split(";")
+        if new==True:
+            if connect_accepte[1]=="DONE":
+                log.write(' compte créer avec succée')
                 showinfo('votre compte à été créer !')
                 app.destroy()
                 appli()
             
-            if connect_accept.find('EXIST')>-1:
-                print('copmpte deja existant')#######log
+            elif connect_accepte[1]=="EXIST":
+                log.write('copmpte deja existant')
                 print('Désolé ce compte exite déja')
                 wrong=1
                 app.destroy()
                 accueil()
 
-        elif auth==1:
-            if connect_accept.find('<|ACCEPTED|>')>-1:
-                print('conection reussi !') #######log
+        else:
+            if connect_accepte[1]=="<|ACCEPTED|>":
+                log.write('conection reussi !')
                 app.destroy()
                 appli()
-
-            
-            if connect_accept.find('<|REJECTED|>')>-1:
-                print("Erreur de mot de passe, ou de pseudo") #######log
+                
+            elif connect_accepte[1]=="<|REJECTED|>":
+                log.write("Erreur de mot de passe, ou de pseudo")
                 wrong= 2
                 app.destroy()
                 accueil()
-
-        else :
-            print("il y a un probléme avec le serveur, en attendant jouer avec cattou") ######### cattou ?
-
 
 #----------------------------------
 
@@ -207,9 +206,7 @@ def accueil():
             client.send(bytes('<|ACCOUNT|>;<|CREATE|>;'+login.get()+";"+password.get(),"UTF-8"))
             
         app.destroy()
-        new =1
-        auth =0
-        identification(new,auth)
+        identification(True)
 
         #autentification
     def id_auth():
@@ -219,9 +216,7 @@ def accueil():
         if test==False:
             client.send(bytes('<|ACCOUNT|>;<|AUTH|>;'+login.get()+";"+password.get(),"UTF-8"))
         app.destroy()
-        auth =1
-        new =0
-        identification(auth,new)
+        identification(False)
 
     #desactive les boutons au moment de la connection
     def disable():
@@ -289,13 +284,7 @@ def taille_fenetre(event) :
     pass
 
 #----------------------------------
-
-if __name__=="__main__":
-    accueil()
-
-
-#--------------------------------
-
+accueil()
 #######memorisation auto
 
 #reciveMsg()

@@ -50,7 +50,7 @@ class MultiClient():
         self._clientList=[]
 
     def addClient(self,client):
-        self.clientList.append(client)
+        self._clientList.append(client)
 
     def sendAll(self,msg):
         for client in self._clientList:

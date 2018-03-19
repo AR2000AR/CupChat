@@ -284,7 +284,7 @@ def taille_fenetre(event) :
     pass
 
 #----------------------------------
-
+accueil()
 #######memorisation auto
 
 #reciveMsg()

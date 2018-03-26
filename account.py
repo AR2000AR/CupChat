@@ -19,12 +19,9 @@ class Account():
             for item in db:
                 item=item.split(";")
                 if item[0]==name:
-                    if item[1]==hashlib.md5(password.encode()).hexdigest():
+                    if item[1].strip()==hashlib.md5(password.encode()).hexdigest():
                         return True
-                    else:
-                        return False
-                else:
-                    return False
+            return False
         
     def exist(self,name):
         with open(self._file,"r") as db:

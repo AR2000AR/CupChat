@@ -2,6 +2,8 @@ from socketTools import *
 from tools import *
 from socket import *
 from account import *
+from limFile import *
+from time import sleep
 import threading
 #=============================
 class ClientThread(threading.Thread):
@@ -25,9 +27,11 @@ class ClientThread(threading.Thread):
                 #------------------------------
                 else:
                     msg=msg.split(";")
+                    print(msg)
                     if msg[0]=="<|ACCOUNT|>":
                         if msg[1]=="<|AUTH|>":
                             tmp=self.account.check(msg[2],msg[3])
+                            print(tmp)
                             if tmp==True:
                                 self.client.send(b'<|AUTH|>;<|ACCEPTED|>')
                             else:
@@ -38,7 +42,14 @@ class ClientThread(threading.Thread):
                             else:
                                 self.client.send(b'<|ACCOUNT|>;<|CREATE|>;EXIST')
                     elif msg[0]=="<|MESSAGE|>":
+                        with LimFile("historique.txt",100) as file:
+                            file.write(msg[1]+";"+msg[2])
                         self.clients.sendAll(bytes(msg[1]+";"+msg[2],"UTF-8"))
+                    elif msg[0]=="<|HISTORIQUE|>":
+                        with open("historique.txt","r") as file:
+                            for line in file:
+                                self.clients.sendAll(bytes(line,"UTF-8"))
+                                sleep(1/1000)
         except ConnectionResetError:
             self.connected = False
             pass
@@ -53,8 +64,14 @@ class MultiClient():
         self._clientList.append(client)
 
     def sendAll(self,msg):
+        tmp=[]
         for client in self._clientList:
-            client.send(bytes(msg,"UTF-8"))
+            if client.connected == True:
+                client.send(bytes(msg,"UTF-8"))
+            else:
+                tmp.append(client)
+        for client in tmp:
+            self._clientList.remove(client)
 #=============================
 def init():
     server = socket(AF_INET, SOCK_STREAM)

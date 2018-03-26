@@ -33,7 +33,7 @@ class Log():
             if parent[0]!="/":
                 parent=sys.path[0]+"/"+parent
         except:
-            parent=sys.path[0]+"/"+parent   
+            parent=sys.path[0]+"/"+parent
         if os.path.exists(parent) and os.path.exists(path) and os.path.isdir(path)==False:
             self._path=path
             if self._mode==LOG_REPLACE:
@@ -69,4 +69,4 @@ class Log():
 #==============================================
 if __name__=="__main__":
     l=Log("data/log.txt",True,"replace")
-print("l=Log()")
+    print("l=Log()")

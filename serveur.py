@@ -4,15 +4,23 @@ from socket import *
 from account import *
 from limFile import *
 from time import sleep
+from configuration import *
+from logger import *
 import threading
 #=============================
+LOG_RX=1
+LOG_TX=1
+LOG_AUTH=2
+#=============================
 class ClientThread(threading.Thread):
-    def __init__(self,client,account,clients):
+    def __init__(self,client,account,clients,config):
         threading.Thread.__init__(self)
         self.client = client
         self.connected = True
         self.account=account
         self.clients=clients
+        self.config=config
+        self.log=config.log
         
     def run(self):
         try:
@@ -26,17 +34,23 @@ class ClientThread(threading.Thread):
                     break
                 #------------------------------
                 else:
+                    if self.config.configDic["LOG_LV"]>=LOG_RX and msg.split()[0]!="<|ACCOUNT|>":
+                        self.log.write("RX",tmp)
                     msg=msg.split(";")
-                    print(msg)
                     if msg[0]=="<|ACCOUNT|>":
                         if msg[1]=="<|AUTH|>":
                             tmp=self.account.check(msg[2],msg[3])
-                            print(tmp)
                             if tmp==True:
                                 self.client.send(b'<|AUTH|>;<|ACCEPTED|>')
+                                if self.config.configDic["LOG_LV"]>=LOG_AUTH:
+                                    self.log.write("AUTH","ACCEPTED")
                             else:
                                 client.send(b'<|AUTH|>;<|REJECTED|>')
+                                if self.config.configDic["LOG_LV"]>=LOG_AUTH:
+                                    self.log.write("AUTH","REJECTED")
                         elif msg[1]=="<|CREATE|>":
+                            if self.config.configDic["LOG_LV"]>=LOG_AUTH:
+                                    self.log.write("AUTH","CREATE?")
                             if self.account.crate(msg[2],msg[3])==True:
                                 self.client.send(b'<|ACCOUNT|>;<|CREATE|>;DONE')
                             else:
@@ -74,26 +88,30 @@ class MultiClient():
             self._clientList.remove(client)
 #=============================
 def init():
+    config = Config("config.cfg")
+    log = Log("log.txt",config.configDic["LOG"],mode=LOG_REPLACE)
+    config.setLog(log)
     server = socket(AF_INET, SOCK_STREAM)
     server.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
-    server.bind((myip(),1948))
+    server.bind((myip(),config.configDic["PORT"]))
     account = Account("account.db")
     clients = MultiClient()
     if account.statu()=="No file":
+        log.write("CRITICAL","No account.db file")
         raise FileNotFoundError("No account.db file")
     print(myip())
     print("1948")
-    return server,account,clients
+    return server,account,clients,config
 #===============================================
 #===============================================
-server,account,clients = init()
+server,account,clients,config = init()
 while True:
     #################################################
     while True:#Connecte le client
         client,adresse = serverAccept(server)
         if client!=False:
             print("Connection to a client")
-            newthread = ClientThread(client,account,clients)
+            newthread = ClientThread(client,account,clients,config)
             clients.addClient(client)
             newthread.start()
     

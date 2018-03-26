@@ -36,7 +36,6 @@ class Config():
     def setFile(self,path):
         if path[0]!="/":
             path=os.getcwd()+"/"+path
-        print(path)
         if os.path.exists(path) and os.path.isdir(path)==False:
             self._path=path
             self._readConf()

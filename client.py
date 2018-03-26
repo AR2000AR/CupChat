@@ -10,7 +10,7 @@ import threading,sys
 
 #désactive la connection au serveur pour le besoin des tests
 
-test=False    
+test=True    
 
 #theme
 
@@ -400,9 +400,9 @@ def appli():
     fenetre()
     app.minsize(width=600, height=500)
 
-    paneau_lateral= Frame(app, bg=theme)
+    paneau_lateral= Frame(app, bg=theme,width=30)
     paneau_lateral.pack()
-    paneau_lateral.place()
+    paneau_lateral.place(anchor=NW)
 
     
     
@@ -410,17 +410,22 @@ def appli():
 
 # bouton des option
     
-    cadre_roue= Frame(paneau_lateral, bg=theme)
+    cadre_roue= Frame(paneau_lateral)
     cadre_roue.pack()
     cadre_roue.place()
 
-    bouton_option=Button(cadre_roue, bg=theme, text='imaginer'+"\n"+'ici'+"\n"+'une roue')#command=option(), image=roue
+    bouton_option=Button(cadre_roue, text='imaginer'+"\n"+'ici'+"\n"+'une roue')#command=option(), image=roue
     paneau_lateral.pack()
-    paneau_lateral.place()
 
+
+#cadres de dialogue avec le serveur pour l'utilisateur
+
+    frame_dialogue=Frame(app,pady=5,padx=5,bg="#4b4e56")
+    frame_dialogue.pack()
+    frame_dialogue.place(anchor=S)
     
     value = StringVar().set("")
-    cadre_dialogue = Entry(app, textvariable=value,show="*", width=30, font=('MV-Boli'), relief=FLAT)
+    cadre_dialogue = Entry(frame_dialogue, textvariable=value, width=30, font=('MV-Boli'), relief=FLAT)
     cadre_dialogue.pack()
     cadre_dialogue.place()
 
@@ -459,7 +464,7 @@ class thread_gif(threading.Thread):
 #================================================= lancement de la page d'attente, et connexion avec le serveur
 
 
-connexion()
+appli()
 
 
 

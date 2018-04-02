@@ -35,7 +35,7 @@ class ClientThread(threading.Thread):
                 #------------------------------
                 else:
                     if self.config.configDic["LOG_LV"]>=LOG_RX and msg.split()[0]!="<|ACCOUNT|>":
-                        self.log.write("RX",tmp)
+                        self.log.write("RX",msg)
                     msg=msg.split(";")
                     if msg[0]=="<|ACCOUNT|>":
                         if msg[1]=="<|AUTH|>":
@@ -51,9 +51,13 @@ class ClientThread(threading.Thread):
                         elif msg[1]=="<|CREATE|>":
                             if self.config.configDic["LOG_LV"]>=LOG_AUTH:
                                     self.log.write("AUTH","CREATE?")
-                            if self.account.crate(msg[2],msg[3])==True:
+                            if self.account.create(msg[2],msg[3])==True:
+                                if self.config.configDic["LOG_LV"]>=LOG_AUTH:
+                                    self.log.write("CREATE","DONE")
                                 self.client.send(b'<|ACCOUNT|>;<|CREATE|>;DONE')
                             else:
+                                if self.config.configDic["LOG_LV"]>=LOG_AUTH:
+                                    self.log.write("CREATE","EXIST")
                                 self.client.send(b'<|ACCOUNT|>;<|CREATE|>;EXIST')
                     elif msg[0]=="<|MESSAGE|>":
                         with LimFile("historique.txt",100) as file:
@@ -99,8 +103,12 @@ def init():
     if account.statu()=="No file":
         log.write("CRITICAL","No account.db file")
         raise FileNotFoundError("No account.db file")
-    print(myip())
-    print("1948")
+    print("ip:"+myip())
+    print("port:"+str(config.configDic["PORT"]))
+    config.log.write("INI",str(myip()))
+    config.log.write("INI",str(config.configDic["PORT"]))
+    for item in config.configDic:
+        config.log.write("CONFIG",item+":"+str(config.configDic[item]))
     return server,account,clients,config
 #===============================================
 #===============================================
@@ -111,6 +119,7 @@ while True:
         client,adresse = serverAccept(server)
         if client!=False:
             print("Connection to a client")
+            config.log.write("CONNECTION","Connection to a client")
             newthread = ClientThread(client,account,clients,config)
             clients.addClient(client)
             newthread.start()

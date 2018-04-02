@@ -38,6 +38,7 @@ class Account():
         else:
             with open(self._file,"a") as db:
                 db.write(name+";"+hashlib.md5(password.encode()).hexdigest()+"\n")
+            return True
 
     def statu(self):
         if self._file=="":

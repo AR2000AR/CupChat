@@ -69,6 +69,7 @@ class ClientThread(threading.Thread):
                                 self.clients.sendAll(bytes(line,"UTF-8"))
                                 sleep(1/1000)
         except ConnectionResetError:
+            print("Client déconécté")
             self.connected = False
             pass
         else:

@@ -8,10 +8,6 @@ import threading,sys
 
 #INIT=================================================================
 
-#désactive la connection au serveur pour le besoin des tests
-
-test=True    
-
 #theme
 
 option_theme=0
@@ -23,7 +19,7 @@ if option_theme==0:
     theme="#60636d"
     ecriture="white"
     file_logo="logo-tchat-nuit.ppm"
-    file_gif=['gif-nuit.gif','gif-nuit.gif']
+    file_roue="roue.jpg"
 
     
 #mode jour
@@ -32,12 +28,8 @@ if option_theme==1:
     theme="white"
     ecriture="black"
     file_logo='logo-tchat-jour.jpg'
-    file_gif=['gif-jour.gif','gif-jour.gif']
+    file_roue="roue.jpg"
 
-
-#variable pour afficher le bon gif sur la bonne page de connexion
-    
-bon_gif=file_gif[0]
 
 
 #compte enregistré ?
@@ -95,16 +87,11 @@ def compte_enregistré() :
 
 def connexion():
     
-    # lance le gif de connection en même temps
-    #newthread = thread_gif()
-    #newthread.start()
-    
     if test==False:
         try:
             global client
             client = clientConnect()
             accueil()
-        #172.18.144.187
             
         except:
             
@@ -191,11 +178,6 @@ def accueil():
             
         app.destroy()
         new=True
-
-#lance le gif de connection en même temps
-        
-        #newthread = thread_gif()
-        #newthread.start()
         
         identification(new)
 
@@ -204,16 +186,12 @@ def accueil():
         
     def id_auth():
         disable()
-        showinfo("Alerte", password.get()+"\n"+login.get() ) #####temporaire
+        print(password.get()+"\n"+login.get()) #####temporaire
         
         if test==False:
             client.send(bytes('<|ACCOUNT|>;<|AUTH|>;'+login.get()+";"+password.get(),"UTF-8"))
         app.destroy()
         new=False
-
-#lance le gif de connection en même temps
-        #newthread = thread_gif()
-        #newthread.start()
     
         identification(new)
 
@@ -306,12 +284,13 @@ def identification(new):
         connect_accepte=connect_accepte.split(";")
         if new==True:
             if connect_accepte[1]=="DONE":
+                
                 log.write("",' compte créer avec succée')
                 showinfo('votre compte à été créer !')
                 appli()
             
             elif connect_accepte[1]=="EXIST":
-                log.write("",'copmpte deja existant')
+                log.write("",'compte deja existant')
                 print('Désolé ce compte exite déja')
                 wrong=1
 
@@ -324,11 +303,165 @@ def identification(new):
                 
             elif connect_accepte[1]=="<|REJECTED|>":
                 log.write("","Erreur de mot de passe, ou de pseudo")
-                wrong= 2
+                wrong=2
                 accueil()
 
             else :
                 log.write("","probléme avec le serveur")
+
+
+
+#---------------------------------- application pricipale
+
+def appli():
+
+    fenetre()
+    app.minsize(width=600, height=500)
+
+
+
+
+#panneau latéral
+    
+    paneau_lateral= Frame(app, bg="#3e4047",width=100)
+    paneau_lateral.pack(fill='y',side=LEFT)
+
+
+#espace pour le nom du serveur
+
+    paneau_serv= Frame(paneau_lateral, bg="#3e4047",width=100)
+    paneau_serv.pack(fill='y',side=LEFT)
+
+    
+# bouton des option
+
+    #roue= PhotoImage(file=file_roue)
+
+    cadre_roue= Frame(paneau_lateral, bg="#3e4047")
+    cadre_roue.pack(side=BOTTOM,fill='x' )
+
+    cadre_roue1= Label(cadre_roue, bg="#3e4047",text="option",fg='#edf0f9',font=("MV-Boli","11","bold"),pady=6,padx=7)#,image=roue
+    cadre_roue1.pack(side=RIGHT)
+
+
+    
+
+
+
+#cadre des messages
+    
+    cadre_principal= Frame(app, bg="pink",width=600-100)
+    cadre_principal.pack(expand=1, fill='both',side=LEFT)
+
+
+#cadre de l'envoie des message
+
+    cadre_message= Frame(cadre_principal, bg=theme,pady=12,padx=12)
+    cadre_message.pack(side=BOTTOM,fill='x' )
+    
+    cadre_message1= Frame(cadre_principal, bg=theme,pady=12,padx=12)
+    cadre_message1.pack(side=BOTTOM,fill='x' )
+    
+    bouton_envoyer= Label(cadre_message1, bg="#747987",text="Envoyer",fg='#edf0f9',font=("MV-Boli","11","bold"),pady=6,padx=7)#,image=fléche
+    bouton_envoyer.pack(side=RIGHT)
+
+    value = StringVar().set("")
+    send = Entry(cadre_message1, textvariable=value, relief=FLAT,font=("MV-Boli","15"), bg='#747987', width=30)
+    send.pack(side=RIGHT,fill='both')
+
+    
+#cadre de l'historique
+    
+    cadre_history= Frame(cadre_principal, bg=theme)
+    cadre_history.pack(side=BOTTOM,fill='both',expand=1)
+
+    
+
+
+
+
+
+
+
+
+# quand la taille est modifié, la mémorise avec event
+
+    app.bind('<Configure>',taille_fenetre)
+
+
+
+#envoie d'une demande d'historique au serveur
+    
+    if test==False:
+        client.send(bytes('<|HISTORIQUE|>',"UTF-8"))
+        
+        newthread = thread_message()
+        newthread.start()
+
+
+    app.mainloop()
+
+
+
+
+#---------------------------------- historique des option de l'utilisateur
+
+def history():
+    pass
+
+
+#---------------------------------- gif affiché en parallele du thread principal
+
+class thread_message(threading.Thread):  
+    def run(self):
+        while True:
+            connect_accepte=reciveMsg(client,2048,theType=str)
+            connect_accepte=connect_accepte.split(";")
+            Label(cadre_history,text=connect_accepte).pack().place()
+         
+
+#================================================= lancement de la page d'attente, et connexion avec le serveur
+
+#désactive la connection au serveur pour le besoin des tests
+
+test=True
+
+#connexion()
+
+#172.18.144.187
+#90.49.31.40
+#51648
+appli()
+
+#=========================================A FAIRE :
+
+# memorisation dans un fichier: la connexion automatique, le théme, la taille, le brouillon du message
+
+# les messages
+
+# envoyer des fichier
+
+# reciveMsg()
+
+# sendFile()
+
+# reciveFile()
+
+# recuperer historique des message
+
+# fichier de langue ?
+
+# The Message widget
+
+# deconnexion
+
+# fermer la connection
+
+#lors de la connection fenetre en premier plan
+
+
+#-------------------------------INUTILE POUR L'INSTANT
+
 
 
                 
@@ -392,105 +525,3 @@ def gif(bon_gif):
              bon_gif=file_gif[1] 
 
 
-
-#---------------------------------- application pricipale
-
-def appli():
-
-    fenetre()
-    app.minsize(width=600, height=500)
-
-    paneau_lateral= Frame(app, bg=theme,width=30)
-    paneau_lateral.pack()
-    paneau_lateral.place(anchor=NW)
-
-    
-    
-    
-
-# bouton des option
-    
-    cadre_roue= Frame(paneau_lateral)
-    cadre_roue.pack()
-    cadre_roue.place()
-
-    bouton_option=Button(cadre_roue, text='imaginer'+"\n"+'ici'+"\n"+'une roue')#command=option(), image=roue
-    paneau_lateral.pack()
-
-
-#cadres de dialogue avec le serveur pour l'utilisateur
-
-    frame_dialogue=Frame(app,pady=5,padx=5,bg="#4b4e56")
-    frame_dialogue.pack()
-    frame_dialogue.place(anchor=S)
-    
-    value = StringVar().set("")
-    cadre_dialogue = Entry(frame_dialogue, textvariable=value, width=30, font=('MV-Boli'), relief=FLAT)
-    cadre_dialogue.pack()
-    cadre_dialogue.place()
-
-
-# quand la taille est modifié, la mémorise avec event
-
-    app.bind('<Configure>',taille_fenetre )
-
-
-#envoie d'une demande d'historique au serveur
-    
-    if test==False:
-        client.send(bytes('<|HISTORIQUE|>',"UTF-8"))
-
-
-    app.mainloop()
-
-
-
-
-#---------------------------------- historique des option de l'utilisateur
-
-def history():
-    pass
-
-
-#---------------------------------- gif affiché en parallele du thread principal
-
-class thread_gif(threading.Thread):     
-    def run(self):
-         gif(bon_gif)
-
-
-
-
-#================================================= lancement de la page d'attente, et connexion avec le serveur
-
-
-appli()
-
-
-
-#=========================================A FAIRE :
-
-# memorisation dans un fichier: la connexion automatique, le théme, la taille, le brouillon du message
-
-# les messages
-
-# envoyer des fichier
-
-# reciveMsg()
-
-# sendFile()
-
-# reciveFile()
-
-# recuperer historique des message
-
-# fichier de langue ?
-
-# The Message widget
-
-# deconnexion
-
-# fermer la connection
-
-
-#lors de la connection fenetre en premier plan

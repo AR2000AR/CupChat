@@ -424,14 +424,14 @@ class thread_message(threading.Thread):
 
 #désactive la connection au serveur pour le besoin des tests
 
-test=True
+test=False
 
-#connexion()
+connexion()
 
 #172.18.144.187
 #90.49.31.40
 #51648
-appli()
+#appli()
 
 #=========================================A FAIRE :
 

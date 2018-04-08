@@ -4,7 +4,7 @@ from tkinter.messagebox import *
 from socket import *
 from tools import *
 from logger import *
-import threading,sys
+import threading,sys,os
 
 #INIT=================================================================
 
@@ -16,19 +16,17 @@ option_theme=0
 #mode nuit
 
 if option_theme==0:
-    theme="#60636d"
-    ecriture="white"
-    file_logo="logo-tchat-nuit.ppm"
-    file_roue="roue.jpg"
+    theme=["#60636d",'#edf0f9']
+    file_logo="image\cup-nuit.gif"
+    file_roue="image\roue.jpg"
 
     
 #mode jour
     
 if option_theme==1:
-    theme="white"
-    ecriture="black"
-    file_logo='logo-tchat-jour.jpg'
-    file_roue="roue.jpg"
+    theme=["white","black"]
+    file_logo='image\cup-jour.gif'
+    file_roue="image\roue.jpg"
 
 
 
@@ -65,13 +63,15 @@ def fenetre():
     global app
     app= Tk()
     app.title("CupChat",)
-    app['bg']=theme
+    app['bg']=theme[0]
+    app.lift()
 
-
-#enregistre la taille et la position de la fenetre modifiée par l'utilisateur
-    
-def taille_fenetre(event) :
-    taille=app.geometry() #recupere la taille de la fenetre
+    #change l'icone
+    if sys.platform=='win32':
+        app.iconbitmap('image/'+os.sep + 'icone.ico')
+        
+    elif sys.platform=='linux2':
+        app.iconbitmap('@' + 'image/'+os.sep + 'icone.xbm')
 
 
 #======================================================================
@@ -89,6 +89,7 @@ def connexion():
     
     if test==False:
         try:
+            log.write("",'connexion ...')
             global client
             client = clientConnect()
             accueil()
@@ -98,11 +99,14 @@ def connexion():
             fenetre()
             app.minsize(width=300, height=325)
             
-            titre_erreur= Label(app, text="Probléme de connexion avec le serveur", bg=theme,fg='Red',  font=("MV-Boli","bold"), justify=LEFT,width= 30 )
+            titre_erreur= Label(app, text="Probléme de connexion avec le serveur", bg=theme[0],fg='Red',  font=("MV-Boli","bold"), justify=LEFT,width= 30 )
             titre_erreur.pack()
 
             app.mainloop()
+            log.write("",'la connexiona échouée avec le serveur')
+            
     if test==True:
+        log.write("",'connexion réussi au serveur')
         accueil()
 
         
@@ -111,44 +115,39 @@ def connexion():
 def accueil():
 
     fenetre()
-    app.minsize(width=600, height=500)
+    app.minsize(width=650, height=500)
 
 #titre principal page d'accueil et logo
     
     logo= PhotoImage(file=file_logo)
 
-    titre= Label(app, text="CupChat", bg=theme,fg=ecriture,  font=('Helvetica','80','bold')) #, image=logo, compound =RIGHT
+    titre= Label(app, text="CupChat", bg=theme[0]
+                 ,fg=theme[1],font=('Helvetica','80','bold')
+                 ,image=logo, compound =LEFT)
     titre.pack()
     titre.place(anchor=N ,relx=0.5, rely=0.1)
 
 
 #frame contenant la partie de l'identification
     
-    fa= Frame(app, bg=theme)
+    fa= Frame(app, bg=theme[0])
     fa.pack()
     fa.place(anchor=N ,relx=0.5, rely=0.4)
 
-#en cas d'ereur de connexion affiche un message rouge
-    
-    if wrong==2:
-        titre_erreur= Label(fa, text="Désolé ce compte exite déja", bg=theme,fg='Red' ,  font="MV-Boli,bold", justify=LEFT,width= 30 )
-        titre_erreur.pack()
-
-    if wrong==1:
-        titre_erreur= Label(fa, text="vous vous êtes trompé de mot de passe, ou de pseudo", bg=theme,fg='Red',  font=("MV-Boli","bold"), justify=LEFT,width= 30 )
-        titre_erreur.pack()
 
 #partie "identification"
         
-    titre_login= Label(fa, text="Identifiant :", bg=theme,fg=ecriture,  font=("MV-Boli"), justify=LEFT,width= 30 )
+    titre_login= Label(fa, text="Identifiant :",bg=theme[0]
+                       ,fg=theme[1],  font=("MV-Boli")
+                       ,justify=LEFT,width= 30)
     titre_login.pack()
 
     fa3= Frame(fa, bg="#4b4e56", pady=2, padx=2)
     fa3.pack()
 
     value = StringVar().set("")
-    login = Entry(fa3, textvariable=value, width=30, font=("MV-Boli"), relief=FLAT)
-    login.pack()
+    frame_login = Entry(fa3, textvariable=value,width=30,font=("MV-Boli"),relief=FLAT)
+    frame_login.pack()
 
     espace= Frame(fa, bg=theme, height=40)
     espace.pack()
@@ -156,25 +155,49 @@ def accueil():
 
 #le "mot de passe" en dessous
     
-    titre_password= Label(fa, text="Mot de passe :", bg=theme,fg=ecriture,font=('MV-Boli'), justify=LEFT, width= 30 )
+    titre_password= Label(fa, text="Mot de passe :"
+                          ,bg=theme[0],fg=theme[1]
+                          ,font=('MV-Boli'),justify=LEFT
+                          , width= 30 )
     titre_password.pack()
 
     fa2= Frame(fa, bg="#4b4e56", pady=2, padx=2)
     fa2.pack()
 
     value = StringVar().set("")
-    password = Entry(fa2, textvariable=value,show="*", width=30, font=('MV-Boli'), relief=FLAT)
-    password.pack()
+    frame_password = Entry(fa2, textvariable=value,show="*",width=30,font=('MV-Boli'),relief=FLAT)
+    frame_password.pack()
+
+    global login , password
+    login=frame_login.get()
+    password=frame_password.get()
+
+
+#en cas d'ereur de connexion affiche un message rouge
+    
+    if wrong==2:
+        titre_erreur= Label(fa,text="Désolé ce compte exite déja"
+                            ,bg=theme[0],fg='Red'
+                            ,font="MV-Boli,bold"
+                            ,justify=LEFT,width= 30)
+        titre_erreur.pack()
+
+    if wrong==1:
+        titre_erreur= Label(fa,text="vous vous êtes trompé de mot de passe, ou de pseudo"
+                            ,bg=theme[0],fg='Red'
+                            ,font=("MV-Boli","bold")
+                            ,justify=LEFT,width= 30)
+        titre_erreur.pack()
 
 
 #creation de compte
     
     def id_create():
         disable()
-        print (password.get()+"\n"+login.get() )
+        print(login+"\n"+password)
 
         if test==False:
-            client.send(bytes('<|ACCOUNT|>;<|CREATE|>;'+login.get()+";"+password.get(),"UTF-8"))
+            client.send(bytes('<|ACCOUNT|>;<|CREATE|>;'+frame_login.get()+";"+frame_password.get(),"UTF-8"))
             
         app.destroy()
         new=True
@@ -186,10 +209,10 @@ def accueil():
         
     def id_auth():
         disable()
-        print(password.get()+"\n"+login.get()) #####temporaire
+        print(login+"\n"+password)
         
         if test==False:
-            client.send(bytes('<|ACCOUNT|>;<|AUTH|>;'+login.get()+";"+password.get(),"UTF-8"))
+            client.send(bytes('<|ACCOUNT|>;<|AUTH|>;'+frame_login.get()+";"+frame_password.get(),"UTF-8"))
         app.destroy()
         new=False
     
@@ -206,20 +229,20 @@ def accueil():
 
 #frame des boutons de connection et de création de compte
         
-    fbouton= Frame(fa, bg=theme, pady=30)
+    fbouton= Frame(fa, bg=theme[0], pady=30)
     fbouton.pack()
 
     
-    fbouton_espace= Frame(fbouton, bg=theme, pady=20)
+    fbouton_espace= Frame(fbouton, bg=theme[0], pady=20)
     fbouton_espace.pack()
 
 
 #frames pour espacer entre les boutons espace entre les boutons
 
-    frame_espace1=Frame(fbouton, pady=5, bg=theme)
+    frame_espace1=Frame(fbouton, pady=5, bg=theme[0])
     frame_espace1.pack()
 
-    frame_espace2=Frame(fbouton, pady=5, bg=theme)
+    frame_espace2=Frame(fbouton, pady=5, bg=theme[0])
     frame_espace2.pack()
 
     
@@ -243,7 +266,13 @@ def accueil():
     
 #bouton pour se connecter
     
-    bouton_valider = Button(frame_espace1, text="Connection", command=id_auth, relief=FLAT, width=20,bg="#525a8e", fg=ecriture, font="40",pady=8, activebackground="#57609b", bd=0)
+    bouton_valider = Button(frame_espace1
+                            ,text="Connection"
+                            ,command=id_auth, relief=FLAT
+                            , width=20,bg="#525a8e"
+                            ,fg=theme[1],font="40"
+                            ,pady=8,activebackground="#57609b"
+                            ,bd=0)
     bouton_valider.pack()
 
     bouton_valider.bind('<Enter>',enter )
@@ -252,7 +281,11 @@ def accueil():
     
 #bouton pour créer un compte
     
-    bouton_créer = Button(frame_espace2, text="Inscription", command=id_create, relief=FLAT, width=20,bg="#525a8e", fg=ecriture, font="40",pady=8, activebackground="#57609b", bd=0)
+    bouton_créer = Button(frame_espace2,text="Inscription"
+                          ,command=id_create,relief=FLAT
+                          ,width=20,bg="#525a8e"
+                          ,fg=theme[1],font="40",pady=8
+                          ,activebackground="#57609b",bd=0)
     bouton_créer.pack()
 
     bouton_créer.bind('<Enter>',enter1 )
@@ -261,7 +294,10 @@ def accueil():
 
 #bouton pour quitter
     
-    bouton_quit = Button(app, text="Quitter", command=app.destroy, relief=FLAT,bg=theme, activebackground=theme, bd=0, font="40")
+    bouton_quit = Button(app, text="Quitter"
+                         ,command=app.destroy,relief=FLAT
+                         ,bg=theme[0],activebackground=theme[0]
+                         ,bd=0, font="40")
     bouton_quit.pack()
     bouton_quit.place(anchor=SE,relx=1.0, rely=1.0)
 
@@ -273,10 +309,10 @@ def accueil():
 def identification(new):
     
     if test==True:
-            app.destroy()
             appli()
             
     if test==False:
+        
         
 #recevoir la confirmation du serveur
         
@@ -323,25 +359,48 @@ def appli():
 
 #panneau latéral
     
-    paneau_lateral= Frame(app, bg="#3e4047",width=100)
+    paneau_lateral= Frame(app, bg="#3e4047",width=70)
     paneau_lateral.pack(fill='y',side=LEFT)
 
 
 #espace pour le nom du serveur
 
-    paneau_serv= Frame(paneau_lateral, bg="#3e4047",width=100)
+    paneau_serv= Frame(paneau_lateral
+                       ,bg="#3e4047",width=70)
+    
     paneau_serv.pack(fill='y',side=LEFT)
 
     
 # bouton des option
 
-    #roue= PhotoImage(file=file_roue)
+    try:
+        #tente de mettre l'image
+        roue= PhotoImage(file="roue.gif")
 
-    cadre_roue= Frame(paneau_lateral, bg="#3e4047")
-    cadre_roue.pack(side=BOTTOM,fill='x' )
+        cadre_roue= Frame(paneau_lateral, bg="#3e4047")
+        cadre_roue.pack(side=BOTTOM,fill='x')
 
-    cadre_roue1= Label(cadre_roue, bg="#3e4047",text="option",fg='#edf0f9',font=("MV-Boli","11","bold"),pady=6,padx=7)#,image=roue
-    cadre_roue1.pack(side=RIGHT)
+
+        cadre_roue1= Label(cadre_roue, bg="#3e4047"
+                           ,text="option",fg=theme[1]
+                           ,font=("MV-Boli","11","bold")
+                           ,pady=6,padx=7,image=roue)
+
+        cadre_roue1.pack(side=RIGHT)
+
+        
+    except:
+        cadre_roue= Frame(paneau_lateral, bg="#3e4047")
+        cadre_roue.pack(side=BOTTOM,fill='x')
+
+
+        cadre_roue1= Label(cadre_roue
+                           ,bg="#3e4047",text="option"
+                           ,fg=theme[1]
+                           ,font=("MV-Boli","11","bold")
+                           ,pady=6,padx=7)
+        
+        cadre_roue1.pack(side=RIGHT)
 
 
     
@@ -350,43 +409,98 @@ def appli():
 
 #cadre des messages
     
-    cadre_principal= Frame(app, bg="pink",width=600-100)
+    cadre_principal= Frame(app, bg="pink",width=500)
     cadre_principal.pack(expand=1, fill='both',side=LEFT)
 
-
+#envoi des message
+    value = StringVar().set("")
+    def send_message():
+        if test==False:
+            client.send(bytes('<|MESSAGE|>;'+login+';'+value,"UTF-8"))
+            send.delete(0,END)
+        if test==True:
+            print(send.get())
+            send.delete(0,END)
+            
 #cadre de l'envoie des message
 
-    cadre_message= Frame(cadre_principal, bg=theme,pady=12,padx=12)
+    cadre_message= Frame(cadre_principal, bg=theme[0]
+                         ,pady=12,padx=12)
+    
     cadre_message.pack(side=BOTTOM,fill='x' )
+
     
-    cadre_message1= Frame(cadre_principal, bg=theme,pady=12,padx=12)
+    cadre_message1= Frame(cadre_principal, bg=theme[0]
+                          ,pady=12,padx=12)
+    
     cadre_message1.pack(side=BOTTOM,fill='x' )
+
     
-    bouton_envoyer= Label(cadre_message1, bg="#747987",text="Envoyer",fg='#edf0f9',font=("MV-Boli","11","bold"),pady=6,padx=7)#,image=fléche
+    bouton_envoyer= Button(cadre_message1, bg="#747987",
+                           text="Envoyer",fg=theme[1],font=("MV-Boli","11","bold")
+                           ,pady=6,padx=7,command=send_message, relief=FLAT
+                           ,activebackground="#747987", bd=0)#,image=fléche
+    
     bouton_envoyer.pack(side=RIGHT)
 
-    value = StringVar().set("")
-    send = Entry(cadre_message1, textvariable=value, relief=FLAT,font=("MV-Boli","15"), bg='#747987', width=30)
-    send.pack(side=RIGHT,fill='both')
+    
+    send = Entry(cadre_message1, textvariable=value
+                 ,relief=FLAT,font=("MV-Boli","15")
+                 ,bg='#747987', width=30)
+    
+    send.pack(side=RIGHT,fill='both',expand=1)
+
+
+#envoi des message
+    def send_messages(event):
+        send_message()
+    
+    send.bind('<Return>', send_messages)
+        
 
     
 #cadre de l'historique
     
-    cadre_history= Frame(cadre_principal, bg=theme)
+    cadre_history= Frame(cadre_principal, bg=theme[0])
     cadre_history.pack(side=BOTTOM,fill='both',expand=1)
+    
+    barre_history=Scrollbar(cadre_history, bg="#3e4047"
+                            ,relief=FLAT
+                            ,troughcolor="#3e4047")
+    
+    barre_history.pack(side=RIGHT,fill='y')
+
+
+#défilement
+
+    def mouse_wheel(event):
+        
+        # repond au evenement de Linux ou Windows sur la roulette
+
+        if event.num == 5 or event.delta == -120:
+            pass
+
+        
+        if event.num == 4 or event.delta == 120:
+            pass
+
+
+#######'Return' 'delta' enter
+
+
+# avec Windows OS
+
+    cadre_history.bind("<MouseWheel>", mouse_wheel)
 
     
+# avec Linux OS
+    cadre_history.bind("<Button-4>", mouse_wheel)
+    cadre_history.bind("<Button-5>", mouse_wheel)
+    
+    defily = Scrollbar(cadre_history, orient='vertical'
+                       ,background="Green"
+                       ,troughcolor="gray")
 
-
-
-
-
-
-
-
-# quand la taille est modifié, la mémorise avec event
-
-    app.bind('<Configure>',taille_fenetre)
 
 
 
@@ -398,6 +512,14 @@ def appli():
         newthread = thread_message()
         newthread.start()
 
+
+#enregistre la taille et la position de la fenetre modifiée par l'utilisateur
+    
+    def taille_fenetre(event) :
+        taille=app.geometry() #recupere la taille de la fenetre
+        
+    app.bind('<Configure>',taille_fenetre)
+    
 
     app.mainloop()
 
@@ -417,8 +539,34 @@ class thread_message(threading.Thread):
         while True:
             connect_accepte=reciveMsg(client,2048,theType=str)
             connect_accepte=connect_accepte.split(";")
-            Label(cadre_history,text=connect_accepte).pack().place()
+            
+            if connect_accepte[1]=="<|MESSAGE|>":
+                
+                if connect_accepte[1]==login:
+                    
+                    frame_message=Frame(cadre_history).pack(side=RIGHT)
+
+                    Label(frame_message
+                          ,text=connect_accepte[1]
+                          , justify='right').pack()
+                    
+                    Label(frame_message
+                          ,text=connect_accepte[2]
+                          , justify='right').pack()
+                else:
+                    frame_message=Frame(cadre_history).pack(side=LEFT)
+
+                    Label(frame_message
+                          ,text=connect_accepte[1]).pack()
+                    
+                    Label(frame_message
+                          ,text=connect_accepte[2]).pack()
          
+
+######### question le serveur me renvoie t'il mes messages quand je lui renvoie
+
+
+
 
 #================================================= lancement de la page d'attente, et connexion avec le serveur
 
@@ -432,6 +580,7 @@ connexion()
 #90.49.31.40
 #51648
 #appli()
+#accueil()
 
 #=========================================A FAIRE :
 
@@ -460,6 +609,9 @@ connexion()
 #lors de la connection fenetre en premier plan
 
 
+
+
+
 #-------------------------------INUTILE POUR L'INSTANT
 
 
@@ -467,61 +619,61 @@ connexion()
                 
 #------------------------------------ definition du gif des pages d'attentes
                 
-def gif(bon_gif):
-    
-     class gif1(Label):
-         
-         def __init__(self, master, filename, speed):
-             
-             self.speed = speed
-             #speed: le delay en milliseconde entre chaques images cette fonction est là pour definir speed
-             
-             self.frames = [] # liste permettant de stocker les images du gif
-             i = 0
-             
-             while True:
-                 try:
-                     p = PhotoImage(file=filename, format="gif - {}".format(i))
-                     #prend les images que comprend le gif
-                     
-                 except TclError:
-                     break #la boucle s'arrête
-                    
-                 self.frames.append(p) #on stock dans la liste les images du gif
-                 i += 1
-
-      
-             super().__init__(master, image=self.frames[0])
-             self.frame = 0
-
-             def suite():
-                 self.num_image = i #nombre d'image
-             
-####partie juste avant à charger
-             
-                 self.after(self.speed, self._animate) #fait attendre (vitesse) et appelle la fonction animate
-
-
-
-      
-                 def _animate(self):
-             
-                     # permet de faire une boucle allant de 1 à nombre max d'image
-                     self.frame = (self.frame + 1) % self.num_image
-             
-                     self['image'] = self.frames[self.frame] #intégre l'image dans les options
-                     self.after(self.speed, self._animate) #fait attendre (vitesse) et appelle la fonction animate crée ainsi un boucle
-
-             fenetre()
-             app.minsize(width=300, height=325)
-             gif = gif1(app, filename=bon_gif, speed=40)
-             gif.grid()
-      
-             app.mainloop()
-
-     
-             # on passe du premier gif au 2e pour la prochaine page d'attente
-     
-             bon_gif=file_gif[1] 
+##def gif(bon_gif):
+##    
+##     class gif1(Label):
+##         
+##         def __init__(self, master, filename, speed):
+##             
+##             self.speed = speed
+##             #speed: le delay en milliseconde entre chaques images cette fonction est là pour definir speed
+##             
+##             self.frames = [] # liste permettant de stocker les images du gif
+##             i = 0
+##             
+##             while True:
+##                 try:
+##                     p = PhotoImage(file=filename, format="gif - {}".format(i))
+##                     #prend les images que comprend le gif
+##                     
+##                 except TclError:
+##                     break #la boucle s'arrête
+##                    
+##                 self.frames.append(p) #on stock dans la liste les images du gif
+##                 i += 1
+##
+##      
+##             super().__init__(master, image=self.frames[0])
+##             self.frame = 0
+##
+##             def suite():
+##                 self.num_image = i #nombre d'image
+##             
+######partie juste avant à charger
+##             
+##                 self.after(self.speed, self._animate) #fait attendre (vitesse) et appelle la fonction animate
+##
+##
+##
+##      
+##                 def _animate(self):
+##             
+##                     # permet de faire une boucle allant de 1 à nombre max d'image
+##                     self.frame = (self.frame + 1) % self.num_image
+##             
+##                     self['image'] = self.frames[self.frame] #intégre l'image dans les options
+##                     self.after(self.speed, self._animate) #fait attendre (vitesse) et appelle la fonction animate crée ainsi un boucle
+##
+##             fenetre()
+##             app.minsize(width=300, height=325)
+##             gif = gif1(app, filename=bon_gif, speed=40)
+##             gif.grid()
+##      
+##             app.mainloop()
+##
+##     
+##             # on passe du premier gif au 2e pour la prochaine page d'attente
+##     
+##             bon_gif=file_gif[1] 
 
 

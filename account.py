@@ -29,8 +29,7 @@ class Account():
                 item=item.split(";")
                 if item[0]==name:
                     return True
-                else:
-                    return False
+            return False
 
     def create(self,name,password):
         if self.exist(name)==True:

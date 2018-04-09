@@ -35,9 +35,8 @@ class ClientThread(threading.Thread):
                 if msg == False:
                     self.connected = False
                     break
-                elif msg == "" or msg ==b'':
-                    self.connected = False
-                    break
+                elif msg=="":
+                    pass
                 #------------------------------
                 else:
                     if msg.split()[0]!="<|ACCOUNT|>":
@@ -52,7 +51,7 @@ class ClientThread(threading.Thread):
                                 self.client.send(b'<|AUTH|>;<|ACCEPTED|>')
                                 self.log("AUTH","ACCEPTED",LOG_AUTH)
                             else:
-                                client.send(b'<|AUTH|>;<|REJECTED|>')
+                                self.client.send(b'<|AUTH|>;<|REJECTED|>')
                                 self.log("AUTH","REJECTED",LOG_AUTH)
                         #Création d'un compte
                         elif msg[1]=="<|CREATE|>":
@@ -66,22 +65,23 @@ class ClientThread(threading.Thread):
                                 
                     ###Envoi de messages
                     elif msg[0]=="<|MESSAGE|>":
-                        with LimFile("historique.txt",100) as file:#Ouvre le fichier d'historique avec la classe
+                        with LimFile("Data/Serveur/historique.txt",100) as file:#Ouvre le fichier d'historique avec la classe
                             file.write(msg[1]+";"+msg[2])          #LimFile qui limite la taille de celui ci
                         self.clients.sendAll(bytes(msg[1]+";"+msg[2],"UTF-8"))
 
                     ###Envoi de l'historique
                     elif msg[0]=="<|HISTORIQUE|>":
-                        with open("historique.txt","r") as file:
+                        with open("Data/Serveur/historique.txt","r") as file:
                             for line in file:
                                 self.clients.sendAll(bytes(line,"UTF-8"))
                                 sleep(1/1000)
         except ConnectionResetError:
-            log("DECONNECTON","Client déconécté",LOG_INFO)
+            self.log("DECONNECTON","Client déconécté",LOG_INFO)
             self.connected = False
+            self.clients.clear()
             pass
-        else:
-            pass
+        #else:
+            #pass
 #-----------------------------
 class MultiClient():
     def __init__(self):
@@ -94,34 +94,73 @@ class MultiClient():
         tmp=[]
         for client in self._clientList:
             if client.connected == True:
-                client.send(bytes(msg,"UTF-8"))
+                client.client.send(bytes(msg,"UTF-8"))
             else:
+                tmp.append(client)
+        for client in tmp:
+            self._clientList.remove(client)
+
+    def clear(self):
+        tmp=[]
+        for client in self._clientList:
+            if client.connected == False:
                 tmp.append(client)
         for client in tmp:
             self._clientList.remove(client)
 #=============================
 def init():
     "Fonction désiné à initialisé le serveur"
+    test=[False,False]
     ###Charge les config
-    config = Config("config.cfg")
-    log = Log("log.txt",config.configDic["LOG"],mode=LOG_REPLACE)
+    if os.path.exists("Data/Serveur/config.cfg") and os.path.isfile("Data/Serveur/config.cfg"):
+        pass
+    else:
+        with open("Data/Serveur/config.cfg","w") as f:
+            f.write("bool;LOG;True\nint;PORT;51648\n#min 0 max 4\nint;LOG_LV;2")
+            f.close()
+    config = Config("Data/Serveur/config.cfg")
+    log = Log("Data/Serveur/log.txt",config.configDic["LOG"],mode=LOG_REPLACE)
     config.setLog(log)
+    
     #Démare le serveur
+    setdefaulttimeout(2)
     server = socket(AF_INET, SOCK_STREAM)
     server.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
     server.bind((myip(),config.configDic["PORT"]))
+    
+    ###Vérifie l'historique
+    if os.path.exists("Data/Serveur/historique.txt") and os.path.isfile("Data/Serveur/historique.txt"):
+        pass
+    else:
+        with open("Data/Serveur/historique.txt","w") as f:
+            f.close()
+            test[0]=False
+            
     ###Ouvre la base de donée des comptes
-    account = Account("account.db")
+    if os.path.exists("Data/Serveur/account.db") and os.path.isfile("Data/Serveur/account.db"):
+        pass
+    else:
+        with open("Data/Serveur/account.db","w") as f:
+            f.write("*;*\n")
+            f.close()
+            test[1]=False
+    account = Account("Data/Serveur/account.db")
+    
     ###Prépare l'acceuil de multiples clients
     clients = MultiClient()
     if account.statu()=="No file":#Verifie l'existence de la base de donné
         log.write("CRITICAL","No account.db file")
-        raise FileNotFoundError("No account.db file")
+        raise FileNotFoundError("No Data/Serveur/account.db file")
+    
     ###Affiche est journalise les info concernant l'initialisation
     print("ip:"+myip())
     print("port:"+str(config.configDic["PORT"]))
     config.log.write("INI",str(myip()))
     config.log.write("INI",str(config.configDic["PORT"]))
+    if test[0]==True:
+        config.log.write("INI","historique.txt created")
+    if test[0]==True:
+        config.log.write("INI","account.db created")
     if config.configDic["LOG_LV"]>=LOG_CONF:
         for item in config.configDic:
             config.log.write("CONFIG",item+":"+str(config.configDic[item]))
@@ -138,6 +177,6 @@ while True:
             config.log.write("CONNECTION","Connection to a client")
         ###Démare une nouvelle tache
         newthread = ClientThread(client,account,clients,config)
-        clients.addClient(client)
+        clients.addClient(newthread)
         newthread.start()
 #=============================================

@@ -69,4 +69,4 @@ class Log():
 #==============================================
 if __name__=="__main__":
     l=Log("data/log.txt",True,"replace")
-print("l=Log()")
+    print("l=Log()")

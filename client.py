@@ -33,7 +33,10 @@ if option_theme==1:
 #compte enregistré ?
 
 create= False
+ 
+#identifiant et mot de passe
 
+login , password = "",""
 
 #variable d'erreur de connection
 
@@ -62,7 +65,7 @@ taille='900x700'
 def fenetre():
     global app
     app= Tk()
-    app.title("CupChat",)
+    app.title(" CupChat",)
     app['bg']=theme[0]
     app.lift()
 
@@ -88,22 +91,38 @@ def compte_enregistré() :
 def connexion():
     
     if test==False:
-        try:
-            log.write("",'connexion ...')
-            global client
-            client = clientConnect()
-            accueil()
+        global client
+        log.write("",'connexion ...')
             
+        try:   
+            client = clientConnect()
+
         except:
             
             fenetre()
             app.minsize(width=300, height=325)
             
-            titre_erreur= Label(app, text="Probléme de connexion avec le serveur", bg=theme[0],fg='Red',  font=("MV-Boli","bold"), justify=LEFT,width= 30 )
+            titre_erreur= Label(app, text="Probléme de connexion avec le serveur"
+                                , bg=theme[0],fg='Red',  font=("MV-Boli","bold")
+                                , justify=CENTER )
             titre_erreur.pack()
+            titre_erreur.place(anchor=N ,relx=0.5, rely=0.1)
 
+
+            bouton_quit = Button(app, text="Quitter"
+                         ,command=app.destroy,relief=FLAT
+                         ,bg=theme[0],activebackground=theme[0]
+                         ,bd=0, font="40")
+            
+            bouton_quit.pack()
+            bouton_quit.place(anchor=SE,relx=1.0, rely=1.0)
+            
+            log.write("",'la connexion a échouée avec le serveur')
+            
             app.mainloop()
-            log.write("",'la connexiona échouée avec le serveur')
+            
+            
+        accueil()
             
     if test==True:
         log.write("",'connexion réussi au serveur')
@@ -115,7 +134,7 @@ def connexion():
 def accueil():
 
     fenetre()
-    app.minsize(width=650, height=500)
+    app.minsize(width=650, height=550)
 
 #titre principal page d'accueil et logo
     
@@ -168,60 +187,90 @@ def accueil():
     frame_password = Entry(fa2, textvariable=value,show="*",width=30,font=('MV-Boli'),relief=FLAT)
     frame_password.pack()
 
-    global login , password
-    login=frame_login.get()
-    password=frame_password.get()
 
 
 #en cas d'ereur de connexion affiche un message rouge
     
-    if wrong==2:
+    if wrong==1:
         titre_erreur= Label(fa,text="Désolé ce compte exite déja"
                             ,bg=theme[0],fg='Red'
-                            ,font="MV-Boli,bold"
-                            ,justify=LEFT,width= 30)
+                            ,font=("MV-Boli,bold")
+                            ,justify=CENTER,width= 30)
         titre_erreur.pack()
 
-    if wrong==1:
-        titre_erreur= Label(fa,text="vous vous êtes trompé de mot de passe, ou de pseudo"
+        
+    if wrong==2:
+        titre_erreur= Label(fa,text="vous vous êtes trompé de mot de passe\nou de pseudo"
                             ,bg=theme[0],fg='Red'
-                            ,font=("MV-Boli","bold")
-                            ,justify=LEFT,width= 30)
-        titre_erreur.pack()
+                            ,font=("MV-Boli,bold")
+                            ,justify=CENTER,width= 30)
 
+
+    if wrong==3:
+        titre_erreur= Label(fa,text="remplissez les deux champs"
+                        ,bg=theme[0],fg='Red'
+                        ,font=("MV-Boli,bold")
+                        ,justify=CENTER,width= 30)
+        titre_erreur.pack()
+        
 
 #creation de compte
     
     def id_create():
-        disable()
-        print(login+"\n"+password)
-
-        if test==False:
-            client.send(bytes('<|ACCOUNT|>;<|CREATE|>;'+frame_login.get()+";"+frame_password.get(),"UTF-8"))
-            
-        app.destroy()
-        new=True
+        auth(True)
         
-        identification(new)
+     
 
 
 #autentification
         
-    def id_auth():
-        disable()
-        print(login+"\n"+password)
-        
-        if test==False:
-            client.send(bytes('<|ACCOUNT|>;<|AUTH|>;'+frame_login.get()+";"+frame_password.get(),"UTF-8"))
-        app.destroy()
-        new=False
-    
-        identification(new)
+    def id_connect(bob=""):
+        auth(False)
 
+    app.bind("<Return>",id_connect)
+
+    def auth(new):
+        global login, wrong, password
+        wrong=0
+        disable()
+        login=frame_login.get()
+        password=frame_password.get()
+        false_identification=verify()
+
+        if new==True and false_identification==False:
+            if test==False :
+                client.send(bytes('<|ACCOUNT|>;<|CREATE|>;'+frame_login.get()+";"+frame_password.get(),"UTF-8"))
+            app.destroy()
+            password=""
+            identification(new)
+            
+        if new==False and false_identification==False:
+            if test==False :
+                client.send(bytes('<|ACCOUNT|>;<|AUTH|>;'+frame_login.get()+";"+frame_password.get(),"UTF-8"))    
+            app.destroy()
+            password=""
+            identification(new)
+
+        if false_identification==True:
+            app.destroy()
+            accueil()
+
+
+#vérifie que le pseudo ou le mot de passe et correct
+            
+
+    def verify():
+        global login,password, wrong
+        if not login or not password :
+            wrong=3
+            return True           
+        else:
+            return False
 
 #desactive les boutons au moment de la connection
         
     def disable():
+        
         bouton_valider.configure(state=DISABLED)
         bouton_créer.configure(state=DISABLED)
         bouton_quit.configure(state=DISABLED)
@@ -232,7 +281,7 @@ def accueil():
     fbouton= Frame(fa, bg=theme[0], pady=30)
     fbouton.pack()
 
-    
+
     fbouton_espace= Frame(fbouton, bg=theme[0], pady=20)
     fbouton_espace.pack()
 
@@ -268,7 +317,7 @@ def accueil():
     
     bouton_valider = Button(frame_espace1
                             ,text="Connection"
-                            ,command=id_auth, relief=FLAT
+                            ,command=id_connect, relief=FLAT
                             , width=20,bg="#525a8e"
                             ,fg=theme[1],font="40"
                             ,pady=8,activebackground="#57609b"
@@ -307,6 +356,7 @@ def accueil():
 #---------------------------------- definition de l'identification avec du serveur
     
 def identification(new):
+    global wrong
     
     if test==True:
             appli()
@@ -316,16 +366,16 @@ def identification(new):
         
 #recevoir la confirmation du serveur
         
-        connect_accepte=reciveMsg(client,2048,theType=str)
-        connect_accepte=connect_accepte.split(";")
+        msg=reciveMsg(client,2048,theType=str)
+        msg=msg.split(";")
         if new==True:
-            if connect_accepte[1]=="DONE":
+            if msg[1]=="DONE":
                 
                 log.write("",' compte créer avec succée')
                 showinfo('votre compte à été créer !')
                 appli()
             
-            elif connect_accepte[1]=="EXIST":
+            elif msg[1]=="EXIST":
                 log.write("",'compte deja existant')
                 print('Désolé ce compte exite déja')
                 wrong=1
@@ -333,11 +383,11 @@ def identification(new):
                 accueil()
 
         else:
-            if connect_accepte[1]=="<|ACCEPTED|>":
+            if msg[1]=="<|ACCEPTED|>":
                 log.write("",'conection reussi !')
                 appli()
                 
-            elif connect_accepte[1]=="<|REJECTED|>":
+            elif msg[1]=="<|REJECTED|>":
                 log.write("","Erreur de mot de passe, ou de pseudo")
                 wrong=2
                 accueil()
@@ -414,12 +464,13 @@ def appli():
 
 #envoi des message
     value = StringVar().set("")
-    def send_message():
+    
+    def send_message(bob=''):
         if test==False:
-            client.send(bytes('<|MESSAGE|>;'+login+';'+value,"UTF-8"))
+            client.send(bytes('<|MESSAGE|>;'+login+';'+send.get(),"UTF-8"))
             send.delete(0,END)
+            
         if test==True:
-            print(send.get())
             send.delete(0,END)
             
 #cadre de l'envoie des message
@@ -452,10 +503,8 @@ def appli():
 
 
 #envoi des message
-    def send_messages(event):
-        send_message()
     
-    send.bind('<Return>', send_messages)
+    send.bind('<Return>', send_message)
         
 
     
@@ -537,33 +586,34 @@ def history():
 class thread_message(threading.Thread):  
     def run(self):
         while True:
-            connect_accepte=reciveMsg(client,2048,theType=str)
-            connect_accepte=connect_accepte.split(";")
-            
-            if connect_accepte[1]=="<|MESSAGE|>":
-                
-                if connect_accepte[1]==login:
-                    
-                    frame_message=Frame(cadre_history).pack(side=RIGHT)
+            msg=reciveMsg(client,2048,theType=str)
+            if msg == "":
+                pass
+            else:
+                msg=msg.split(";")
 
-                    Label(frame_message
-                          ,text=connect_accepte[1]
-                          , justify='right').pack()
+                if msg[0]=="<|MESSAGE|>":
                     
-                    Label(frame_message
-                          ,text=connect_accepte[2]
-                          , justify='right').pack()
-                else:
-                    frame_message=Frame(cadre_history).pack(side=LEFT)
+                    if msg[1]==login:
+                        
+                        frame_message=Frame(cadre_history).pack(side=RIGHT)
 
-                    Label(frame_message
-                          ,text=connect_accepte[1]).pack()
-                    
-                    Label(frame_message
-                          ,text=connect_accepte[2]).pack()
+                        Label(frame_message
+                              ,text=msg[1]
+                              , justify='right').pack()
+                        
+                        Label(frame_message
+                              ,text=msg[2]
+                              , justify='right').pack()
+                    else:
+                        frame_message=Frame(cadre_history).pack(side=LEFT)
+
+                        Label(frame_message
+                              ,text=msg[1]).pack()
+                        
+                        Label(frame_message
+                              ,text=msg[2]).pack()
          
-
-######### question le serveur me renvoie t'il mes messages quand je lui renvoie
 
 
 
@@ -595,6 +645,7 @@ connexion()
 # sendFile()
 
 # reciveFile()
+
 
 # recuperer historique des message
 

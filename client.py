@@ -8,6 +8,10 @@ import threading,sys,os
 
 #INIT=================================================================
 
+#thread
+global newthread
+
+
 #theme
 
 option_theme=0
@@ -75,6 +79,7 @@ def fenetre():
         
     elif sys.platform=='linux2':
         app.iconbitmap('@' + 'image/'+os.sep + 'icone.xbm')
+
 
 
 #======================================================================
@@ -403,6 +408,7 @@ def appli():
 
     fenetre()
     app.minsize(width=600, height=500)
+    app.protocol("WM_DELETE_WINDOW", Intercepte) 
 
 
 
@@ -466,7 +472,7 @@ def appli():
     value = StringVar().set("")
     
     def send_message(bob=''):
-        if test==False:
+        if test==False and len(send.get())>0:
             client.send(bytes('<|MESSAGE|>;'+login+';'+send.get(),"UTF-8"))
             send.delete(0,END)
             
@@ -509,15 +515,12 @@ def appli():
 
     
 #cadre de l'historique
-    
+    global cadre_history
     cadre_history= Frame(cadre_principal, bg=theme[0])
     cadre_history.pack(side=BOTTOM,fill='both',expand=1)
+
+ #stocker les messages ?
     
-    barre_history=Scrollbar(cadre_history, bg="#3e4047"
-                            ,relief=FLAT
-                            ,troughcolor="#3e4047")
-    
-    barre_history.pack(side=RIGHT,fill='y')
 
 
 #défilement
@@ -545,6 +548,7 @@ def appli():
 # avec Linux OS
     cadre_history.bind("<Button-4>", mouse_wheel)
     cadre_history.bind("<Button-5>", mouse_wheel)
+
     
     defily = Scrollbar(cadre_history, orient='vertical'
                        ,background="Green"
@@ -557,9 +561,12 @@ def appli():
     
     if test==False:
         client.send(bytes('<|HISTORIQUE|>',"UTF-8"))
-        
-        newthread = thread_message()
-        newthread.start()
+
+    global newthread
+
+    newthread = thread_message()
+##    newthread.setDaemon(2)
+    newthread.start()
 
 
 #enregistre la taille et la position de la fenetre modifiée par l'utilisateur
@@ -567,13 +574,8 @@ def appli():
     def taille_fenetre(event) :
         taille=app.geometry() #recupere la taille de la fenetre
         
+
     app.bind('<Configure>',taille_fenetre)
-    
-
-    app.mainloop()
-
-
-
 
 #---------------------------------- historique des option de l'utilisateur
 
@@ -581,41 +583,55 @@ def history():
     pass
 
 
-#---------------------------------- gif affiché en parallele du thread principal
+#---------------------------------- reception des messages en parallele du thread principal
 
 class thread_message(threading.Thread):  
     def run(self):
+        global cadre_history,client
         while True:
             msg=reciveMsg(client,2048,theType=str)
-            if msg == "":
-                pass
-            else:
-                msg=msg.split(";")
+            print(msg)
+            #msg="<|MESSAGE|>;gnoqui;dgdgdggddggdgdghbfbhis"
+##            print(msg)
+##            msg1=msg1.split("<|MESSAGE|>")
+##            msg=[]
+##            i=0
+##            while i <len(msg):
+##                msg.append(msg1[i].split(";"))
+##                i=i+1
 
-                if msg[0]=="<|MESSAGE|>":
+            a=msg.split(";")
+            if a[0]=="<|MESSAGE|>":
+              a=msg.split("<|MESSAGE|>")
+              print(a)
+              del a[0]
+              for line in a:
+                content=line.split(";")
+                del content[0]
+                print(content)
+                
+                if content[0]==login:
                     
-                    if msg[1]==login:
-                        
-                        frame_message=Frame(cadre_history).pack(side=RIGHT)
+                    frame_message=Frame(cadre_history).pack(side=RIGHT)
 
-                        Label(frame_message
-                              ,text=msg[1]
-                              , justify='right').pack()
-                        
-                        Label(frame_message
-                              ,text=msg[2]
-                              , justify='right').pack()
-                    else:
-                        frame_message=Frame(cadre_history).pack(side=LEFT)
+                    Label(frame_message
+                          ,text=content[0]+": "+content[1]
+                          , justify='right').pack()
+                else:
+                    frame_message=Frame(cadre_history).pack(side=LEFT)
 
-                        Label(frame_message
-                              ,text=msg[1]).pack()
-                        
-                        Label(frame_message
-                              ,text=msg[2]).pack()
+                    Label(frame_message
+                          ,text=content[0]+": "+content[1]).pack()
          
 
 
+#-----------envoi de la fermeture au serveur
+def Intercepte():
+    global app, client,newthread
+    print ("Interception de la fermeture de la fenetre" )
+    newthread._stop()
+    app.destroy()
+    client.close()
 
 
 #================================================= lancement de la page d'attente, et connexion avec le serveur
@@ -628,6 +644,7 @@ connexion()
 
 #172.18.144.187
 #90.49.31.40
+#90.93.251.67
 #51648
 #appli()
 #accueil()
@@ -635,6 +652,7 @@ connexion()
 #=========================================A FAIRE :
 
 # memorisation dans un fichier: la connexion automatique, le théme, la taille, le brouillon du message
+
 
 # les messages
 

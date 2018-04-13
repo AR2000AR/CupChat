@@ -9,10 +9,10 @@ from logger import *
 import threading
 #=============================
 LOG_INFO=1
-LOG_RX=2
-LOG_TX=2
-LOG_AUTH=3
-LOG_CONF=4
+LOG_RX=5
+LOG_TX=5
+LOG_AUTH=4
+LOG_CONF=3
 #=============================
 class ClientThread(threading.Thread):
     def __init__(self,client,account,clients,config):
@@ -22,6 +22,7 @@ class ClientThread(threading.Thread):
         self.account=account
         self.clients=clients
         self.config=config
+        self.h=LimFile("Data/Serveur/historique.txt",100)#Ouvre le fichier d'historique avec la classe LimFile qui limite la taille de celui ci
 
     def log(self,name,content,lv):
         if self.config.configDic["LOG_LV"]>=lv:
@@ -33,7 +34,10 @@ class ClientThread(threading.Thread):
                 msg = reciveMsg(self.client,1024,theType=str)
                 ####Gestion des erreurs
                 if msg == False:
+                    self.log("DECONNECTON","Client déconécté",LOG_INFO)
                     self.connected = False
+                    self.client.close()
+                    self.client.clear()
                     break
                 elif msg=="":
                     pass
@@ -65,27 +69,33 @@ class ClientThread(threading.Thread):
                                 
                     ###Envoi de messages
                     elif msg[0]=="<|MESSAGE|>":
-                        with LimFile("Data/Serveur/historique.txt",100) as file:#Ouvre le fichier d'historique avec la classe
-                            file.write(msg[1]+";"+msg[2])          #LimFile qui limite la taille de celui ci
-                        self.clients.sendAll(bytes(msg[1]+";"+msg[2],"UTF-8"))
+                        self.h.write(msg[1]+";"+msg[2])
+                        self.clients.sendAll(msg[1]+";"+msg[2])
 
                     ###Envoi de l'historique
                     elif msg[0]=="<|HISTORIQUE|>":
                         with open("Data/Serveur/historique.txt","r") as file:
                             for line in file:
-                                self.clients.sendAll(bytes(line,"UTF-8"))
+                                self.log("TX",line.strip(),LOG_TX)
+                                self.client.send(bytes("<|MESSAGE|>;"+line.strip(),"UTF-8"))
                                 sleep(1/1000)
         except ConnectionResetError:
             self.log("DECONNECTON","Client déconécté",LOG_INFO)
             self.connected = False
+            self.client.close()
             self.clients.clear()
-            pass
+        except OSError:
+            self.log("DECONNECTON","Client déconécté",LOG_INFO)
+            self.connected = False
+            self.client.close()
+            self.clients.clear()
         #else:
             #pass
 #-----------------------------
 class MultiClient():
-    def __init__(self):
+    def __init__(self,config):
         self._clientList=[]
+        self.config=config
 
     def addClient(self,client):
         self._clientList.append(client)
@@ -94,7 +104,9 @@ class MultiClient():
         tmp=[]
         for client in self._clientList:
             if client.connected == True:
-                client.client.send(bytes(msg,"UTF-8"))
+                if self.config.configDic["LOG_LV"]>=LOG_TX:
+                    self.config.log.write("TX",msg)
+                client.client.send(bytes("<|MESSAGE|>;"+msg,"UTF-8"))
             else:
                 tmp.append(client)
         for client in tmp:
@@ -147,7 +159,7 @@ def init():
     account = Account("Data/Serveur/account.db")
     
     ###Prépare l'acceuil de multiples clients
-    clients = MultiClient()
+    clients = MultiClient(config)
     if account.statu()=="No file":#Verifie l'existence de la base de donné
         log.write("CRITICAL","No account.db file")
         raise FileNotFoundError("No Data/Serveur/account.db file")
@@ -157,6 +169,7 @@ def init():
     print("port:"+str(config.configDic["PORT"]))
     config.log.write("INI",str(myip()))
     config.log.write("INI",str(config.configDic["PORT"]))
+    config.log.write("INI","WD : "+os.getcwd())
     if test[0]==True:
         config.log.write("INI","historique.txt created")
     if test[0]==True:

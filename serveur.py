@@ -37,7 +37,7 @@ class ClientThread(threading.Thread):
                     self.log("DECONNECTON","Client déconécté",LOG_INFO)
                     self.connected = False
                     self.client.close()
-                    self.client.clear()
+                    self.clients.clear()
                     break
                 elif msg=="":
                     pass
@@ -70,7 +70,7 @@ class ClientThread(threading.Thread):
                     ###Envoi de messages
                     elif msg[0]=="<|MESSAGE|>":
                         self.h.write(msg[1]+";"+msg[2])
-                        self.clients.sendAll(msg[1]+";"+msg[2])
+                        self.clients.sendAll("<|MESSAGE|>;"+msg[1]+";"+msg[2])
 
                     ###Envoi de l'historique
                     elif msg[0]=="<|HISTORIQUE|>":
@@ -106,7 +106,7 @@ class MultiClient():
             if client.connected == True:
                 if self.config.configDic["LOG_LV"]>=LOG_TX:
                     self.config.log.write("TX",msg)
-                client.client.send(bytes("<|MESSAGE|>;"+msg,"UTF-8"))
+                client.client.send(bytes(msg,"UTF-8"))
             else:
                 tmp.append(client)
         for client in tmp:
@@ -127,6 +127,15 @@ def init():
     if os.path.exists("Data/Serveur/config.cfg") and os.path.isfile("Data/Serveur/config.cfg"):
         pass
     else:
+        try:
+            os.makedirs("Data")
+        except FileExistsError:
+            pass
+        try:
+            os.makedirs("Data/Serveur")
+        except FileExistsError:
+            pass
+        
         with open("Data/Serveur/config.cfg","w") as f:
             f.write("bool;LOG;True\nint;PORT;51648\n#min 0 max 4\nint;LOG_LV;2")
             f.close()

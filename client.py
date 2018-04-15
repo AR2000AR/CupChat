@@ -16,8 +16,10 @@ from socketTools import *
 from configuration import *
 from VerticalScrolledFrame import *
 #Definition des variables globals=================
-global wrong,id_status,fen,client,config
+global wrong,id_status,fen,client,config,stop
 id_status=False
+stop=False
+wrong=0
 #DEFINITION DES FONCTIONS=========================
 def init():
     if os.path.exists("Data/Client/config.cfg") and os.path.isfile("Data/Client/config.cfg"):
@@ -48,7 +50,7 @@ def init():
     return config,theme
 
 def clean_end():
-    global fen,client,reception_msg,config
+    global fen,client,reception_msg,config,stop
     config.log.write("EXIT","Interception de la fermeture de la fenetre" )
     try:
         client.close()
@@ -58,8 +60,8 @@ def clean_end():
         reception_msg.stop=True
     except:
         pass
-    sleep(1)
     fen.destroy()
+    stop=True
 
 def build_fen(titre,theme):
     fen= Tk()
@@ -79,7 +81,7 @@ def build_fen(titre,theme):
     return fen
 
 def login_screen(theme):
-    global wrong,config,fen
+    global wrong,config,fen,login
 
     def disable():
         bouton_valider.configure(state=DISABLED)
@@ -88,10 +90,10 @@ def login_screen(theme):
     
     def id_create():
         global wrong,config
-        wrong=auth(True)
+        auth(True)
     def id_connect(bob=""):
         global wrong
-        wrong=auth(False)
+        auth(False)
 
     def identification(new):
         global wrong,id_status
@@ -101,38 +103,39 @@ def login_screen(theme):
         if new==True:
             if msg[1]=="DONE":
                 
-                log.write("",' compte créer avec succée')
+                config.log.write("",' compte créer avec succée')
                 showinfo('CupChat Connection','votre compte à été créer !')
                 id_status=False
             
             elif msg[1]=="EXIST":
-                log.write("",'compte deja existant')
+                config.log.write("",'compte deja existant')
                 showwarning('CupChat Connection','Désolé ce compte exite déja')
                 wrong=1
                 id_status=False
         else:
             if msg[1]=="<|ACCEPTED|>":
-                log.write("",'conection reussi !')
+                config.log.write("",'conection reussi !')
                 id_status=True
                 
             elif msg[1]=="<|REJECTED|>":
-                log.write("","Erreur de mot de passe, ou de pseudo")
+                config.log.write("","Erreur de mot de passe, ou de pseudo")
                 wrong=2
                 id_status=False
             else :
-                log.write("","probléme avec le serveur")
+                config.log.write("","probléme avec le serveur")
 
-        def auth(new):
-            global wrong
-            wrong=0
-            disable()
-            login=frame_login.get()
-            password=frame_password.get()
-            
-            if not login or not password :
-                wrong=3
-                id_status=False
-            
+    def auth(new):
+        global wrong,login
+        wrong=0
+        disable()
+        login=frame_login.get()
+        password=frame_password.get()
+        
+        if not login or not password :
+            wrong=3
+            id_status=False
+            fen.destroy()
+        else:
             if new==True:
                 client.send(bytes('<|ACCOUNT|>;<|CREATE|>;'+frame_login.get()+";"+frame_password.get(),"UTF-8"))
                 fen.destroy()
@@ -174,7 +177,7 @@ def login_screen(theme):
                 bouton_quit = Button(fen, text="Quitter",command=fen.destroy,relief=FLAT,bg=theme[0],activebackground=theme[0],bd=0,font="40")
                 bouton_quit.pack()
                 bouton_quit.place(anchor=SE,relx=1.0, rely=1.0)
-                log.write("ERREUR",'la connexion a échouée avec le serveur')
+                config.log.write("ERREUR",'la connexion a échouée avec le serveur')
                 fen.mainloop()
                 return False
         else:
@@ -183,8 +186,11 @@ def login_screen(theme):
     #Si la connection a réusie=============================================================================
     tmp.pack_forget()
     #titre principal page d'accueil et logo
-    logo= PhotoImage(file=theme[2])
-    titre= Label(fen, text="CupChat", bg=theme[0],fg=theme[1],font=('Helvetica','80','bold'),image=logo, compound =LEFT)
+    try:
+        logo= PhotoImage(file=theme[2])
+        titre= Label(fen, text="CupChat", bg=theme[0],fg=theme[1],font=('Helvetica','80','bold'),image=logo, compound =LEFT)
+    except:
+        titre= Label(fen, text="CupChat", bg=theme[0],fg=theme[1],font=('Helvetica','80','bold'))
     titre.pack()
     titre.place(anchor=N ,relx=0.5, rely=0.1)
     #frame contenant la partie de l'identification
@@ -199,7 +205,7 @@ def login_screen(theme):
     value = StringVar().set("")
     frame_login = Entry(fa3, textvariable=value,width=30,font=("MV-Boli"),relief=FLAT)
     frame_login.pack()
-    espace= Frame(fa, bg=theme, height=40)
+    espace= Frame(fa, bg=theme[0], height=40)
     espace.pack()
     #le "mot de passe" en dessous
     titre_password= Label(fa, text="Mot de passe :",bg=theme[0],fg=theme[1],font=('MV-Boli'),justify=LEFT, width= 30 )
@@ -208,7 +214,7 @@ def login_screen(theme):
     fa2.pack()
     value = StringVar().set("")
     frame_password = Entry(fa2, textvariable=value,show="*",width=30,font=('MV-Boli'),relief=FLAT)
-    frale_password.bind("<Return>",id_connect)
+    frame_password.bind("<Return>",id_connect)
     frame_password.pack()
     #en cas d'ereur de connexion affiche un message rouge
     if wrong==1:
@@ -219,28 +225,39 @@ def login_screen(theme):
         titre_erreur= Label(fa,text="remplissez les deux champs",bg=theme[0],fg='Red',font=("MV-Boli,bold"),justify=CENTER,width= 30)
     if wrong!=0:
         titre_erreur.pack()
+    #frame des boutons de connection et de création de compte      
+    fbouton= Frame(fa, bg=theme[0], pady=30)
+    fbouton.pack()
+    fbouton_espace= Frame(fbouton, bg=theme[0], pady=20)
+    fbouton_espace.pack()
+    #frames pour espacer entre les boutons espace entre les boutons
+    frame_espace1=Frame(fbouton, pady=5, bg=theme[0])
+    frame_espace1.pack()
+    frame_espace2=Frame(fbouton, pady=5, bg=theme[0])
+    frame_espace2.pack()
     #bouton pour se connecter
     bouton_valider = Button(frame_espace1,text="Connection",command=id_connect, relief=FLAT, width=20,bg="#525a8e",fg=theme[1],font="40",pady=8,activebackground="#57609b",bd=0)
     bouton_valider.pack()
-    bouton_valider.bind('<Enter>',enter )
-    bouton_valider.bind('<Leave>',leave )
+    bouton_valider.bind('<Enter>',hover_v)
+    bouton_valider.bind('<Leave>',leave_v)
     #bouton pour créer un compte 
     bouton_créer = Button(frame_espace2,text="Inscription",command=id_create,relief=FLAT,width=20,bg="#525a8e",fg=theme[1],font="40",pady=8,activebackground="#57609b",bd=0)
     bouton_créer.pack()
-    bouton_créer.bind('<Enter>',enter1 )
-    bouton_créer.bind('<Leave>',leave1 )
+    bouton_créer.bind('<Enter>',hover_c)
+    bouton_créer.bind('<Leave>',leave_c)
     #bouton pour quitter
-    bouton_quit = Button(fen, text="Quitter",command=fen.destroy,relief=FLAT,bg=theme[0],activebackground=theme[0],bd=0, font="40")
+    bouton_quit = Button(fen, text="Quitter",command=clean_end,relief=FLAT,bg=theme[0],activebackground=theme[0],bd=0, font="40")
     bouton_quit.pack()
     bouton_quit.place(anchor=SE,relx=1.0, rely=1.0)
 
     fen.mainloop()
-    return client
+    return client,login
 #-------------------------------------------------
-def chat_screen(theme):
+def chat_screen(theme,login):
     global fen,config,client,reception_msg
 
     def send_message(bob=''):
+        global client
         if len(send.get())>0:
             client.send(bytes('<|MESSAGE|>;'+login+';'+send.get(),"UTF-8"))
             send.delete(0,END)#Efface le contenu du widget Entry
@@ -285,43 +302,48 @@ def chat_screen(theme):
     #cadre de l'historique
     cadre_history= VerticalScrolledFrame(cadre_principal, bg=theme[0])
     cadre_history.pack(side=BOTTOM,fill='both',expand=1)
-    reception_msg = thread_message(cadre_history)
+    reception_msg = thread_message(cadre_history,client)
     reception_msg.start()
     #envoie d'une demande d'historique au serveur
     client.send(bytes('<|HISTORIQUE|>',"UTF-8"))
     fen.mainloop()
 #CLASSES==========================================
 class thread_message(threading.Thread):
-    def __init__(self,cadre_history):
+    def __init__(self,cadre_history,client):
+        threading.Thread.__init__(self)
         self.stop=False
         self.frame=cadre_history
+        self.client=client
 
     def run(self):
         while self.stop==False:
             try:
                 msg=reciveMsg(client,2048,theType=str)
-                a=msg.split(";")
-                if self.stop==True:
-                    break
-                elif a[0]=="<|MESSAGE|>":
-                  a=msg.split("<|MESSAGE|>")
-                  del a[0]
-                  for line in a:
+            except:
+                self.stop=True
+                
+            if self.stop==True:
+                break
+            a=msg.split(";")
+            if a[0]=="<|MESSAGE|>":
+                a=msg.split("<|MESSAGE|>")
+                del a[0]
+                for line in a:
+                    print(line)
                     content=line.split(";")
                     del content[0]             
                     if content[1]==login:
-                        Label(self.frame,text=content[1]+": "+content[2], justify='right').pack()
+                        Label(self.frame,text=content[0]+": "+content[1], justify='right').pack()
                     else:
-                        Label(fself.frame,text=content[1]+": "+content[2]).pack()
-            except:
-                self.stop=True
+                        Label(self.frame,text=content[0]+": "+content[1]).pack()
+                    self.frame.update_idletasks()
 #PROGRAMME PRINCIPAL==============================
 config,theme = init()
-while id_status==False:
-    client=login_screen(theme)
+while id_status==False and stop == False:
+    client,login=login_screen(theme)
     if client == False:
         clean_end()
         break
 
-if client != False:
-    chat_screen(theme)
+if client != False and stop == False:
+    chat_screen(theme,login)

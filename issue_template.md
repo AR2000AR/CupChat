@@ -1,7 +1,7 @@
-##Error message or description
+## Error message or description
 
-##What is supposed to append
+## What is supposed to append
 
-##How to reproduce it
+## How to reproduce it
 
-##Other usefull (or not) stuff
+## Other usefull (or not) stuff

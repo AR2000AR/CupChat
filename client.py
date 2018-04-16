@@ -273,7 +273,7 @@ def chat_screen(theme,login):
     # bouton des option
     try:
         #tente de mettre l'image
-        roue= PhotoImage(file="roue.gif")
+        roue= PhotoImage(file="Data/Client/image/roue.gif")
         cadre_roue= Frame(paneau_lateral, bg="#3e4047")
         cadre_roue.pack(side=BOTTOM,fill='x')
         cadre_roue1= Label(cadre_roue, bg="#3e4047",text="option",fg=theme[1],font=("MV-Boli","11","bold"),pady=6,padx=7,image=roue)

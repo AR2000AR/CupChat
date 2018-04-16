@@ -6,6 +6,7 @@ from limFile import *
 from time import sleep
 from configuration import *
 from logger import *
+from RSA import *
 import threading
 #=============================
 LOG_INFO=1
@@ -166,6 +167,9 @@ def init():
             f.close()
             test[1]=False
     account = Account("Data/Serveur/account.db")
+
+    #Prépare le chiffrement
+    config.rsa = Crypto()
     
     ###Prépare l'acceuil de multiples clients
     clients = MultiClient(config)

@@ -2,7 +2,7 @@ from Crypto.PublicKey import RSA
 from Crypto import Random
 from Crypto.Cipher import PKCS1_OAEP
 
-class crpto():
+class Crpto():
     def __init__(self):
         self._local_key = RSA.generate(1024,Random.new().read)
         self._local_cipher = PKCS1_OAEP.new(self._local_key)

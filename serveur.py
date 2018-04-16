@@ -174,8 +174,6 @@ def init():
         raise FileNotFoundError("No Data/Serveur/account.db file")
     
     ###Affiche est journalise les info concernant l'initialisation
-    print("ip:"+myip())
-    print("port:"+str(config.configDic["PORT"]))
     config.log.write("INI",str(myip()))
     config.log.write("INI",str(config.configDic["PORT"]))
     config.log.write("INI","WD : "+os.getcwd())

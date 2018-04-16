@@ -23,8 +23,12 @@ class ClientThread(threading.Thread):
         self.account=account
         self.clients=clients
         self.config=config
+        self.secue=0
         self.h=LimFile("Data/Serveur/historique.txt",100)#Ouvre le fichier d'historique avec la classe LimFile qui limite la taille de celui ci
 
+    def send(self,msg):
+        self.client.send(bytes(str(config.rsa.encrypt(msg)),"UTF-8"))
+    
     def log(self,name,content,lv):
         if self.config.configDic["LOG_LV"]>=lv:
             self.config.log.write(name,content)
@@ -44,42 +48,52 @@ class ClientThread(threading.Thread):
                     pass
                 #------------------------------
                 else:
-                    if msg.split()[0]!="<|ACCOUNT|>":
-                        self.log("RX",msg,LOG_RX)
-                    msg=msg.split(";")
-                    ###Gestion de l'authentification
-                    if msg[0]=="<|ACCOUNT|>":
-                        #Authentification
-                        if msg[1]=="<|AUTH|>":
-                            tmp=self.account.check(msg[2],msg[3])
-                            if tmp==True:
-                                self.client.send(b'<|AUTH|>;<|ACCEPTED|>')
-                                self.log("AUTH","ACCEPTED",LOG_AUTH)
-                            else:
-                                self.client.send(b'<|AUTH|>;<|REJECTED|>')
-                                self.log("AUTH","REJECTED",LOG_AUTH)
-                        #Création d'un compte
-                        elif msg[1]=="<|CREATE|>":
-                            self.log("AUTH","CREATE?",LOG_AUTH)
-                            if self.account.create(msg[2],msg[3])==True:
-                                self.log("CREATE","DONE",LOG_AUTH)
-                                self.client.send(b'<|ACCOUNT|>;<|CREATE|>;DONE')
-                            else:
-                                self.log("CREATE","EXIST",LOG_AUTH)
-                                self.client.send(b'<|ACCOUNT|>;<|CREATE|>;EXIST')
-                                
-                    ###Envoi de messages
-                    elif msg[0]=="<|MESSAGE|>":
-                        self.h.write(msg[1]+";"+msg[2])
-                        self.clients.sendAll("<|MESSAGE|>;"+msg[1]+";"+msg[2])
+                    if self.secure == 0:
+                        self.client.send(b'<|CONNECTION|>;'+bytes(config.rsa.getPublicKey(),"UTF-8"))
+                        self.secure = 1
+                    elif self.secure == 1:
+                        msg=msg.split(";")
+                        if msg[0] == "<|CONNECTION|>":
+                            config.rsa.setPublicKey(msg[1])
+                                         
+                    else:
+                        msg=config.rsa.decrypt(msg)
+                        if msg.split()[0]!="<|ACCOUNT|>":
+                            self.log("RX",msg,LOG_RX)
+                        msg=msg.split(";")
+                        ###Gestion de l'authentification
+                        if msg[0]=="<|ACCOUNT|>":
+                            #Authentification
+                            if msg[1]=="<|AUTH|>":
+                                tmp=self.account.check(msg[2],msg[3])
+                                if tmp==True:
+                                    self.send(b'<|AUTH|>;<|ACCEPTED|>')
+                                    self.log("AUTH","ACCEPTED",LOG_AUTH)
+                                else:
+                                    self.send(b'<|AUTH|>;<|REJECTED|>')
+                                    self.log("AUTH","REJECTED",LOG_AUTH)
+                            #Création d'un compte
+                            elif msg[1]=="<|CREATE|>":
+                                self.log("AUTH","CREATE?",LOG_AUTH)
+                                if self.account.create(msg[2],msg[3])==True:
+                                    self.log("CREATE","DONE",LOG_AUTH)
+                                    self.send(b'<|ACCOUNT|>;<|CREATE|>;DONE')
+                                else:
+                                    self.log("CREATE","EXIST",LOG_AUTH)
+                                    self.send(b'<|ACCOUNT|>;<|CREATE|>;EXIST')
+                                    
+                        ###Envoi de messages
+                        elif msg[0]=="<|MESSAGE|>":
+                            self.h.write(msg[1]+";"+msg[2])
+                            self.clients.sendAll("<|MESSAGE|>;"+msg[1]+";"+msg[2])
 
-                    ###Envoi de l'historique
-                    elif msg[0]=="<|HISTORIQUE|>":
-                        with open("Data/Serveur/historique.txt","r") as file:
-                            for line in file:
-                                self.log("TX",line.strip(),LOG_TX)
-                                self.client.send(bytes("<|MESSAGE|>;"+line.strip(),"UTF-8"))
-                                sleep(1/1000)
+                        ###Envoi de l'historique
+                        elif msg[0]=="<|HISTORIQUE|>":
+                            with open("Data/Serveur/historique.txt","r") as file:
+                                for line in file:
+                                    self.log("TX",line.strip(),LOG_TX)
+                                    self.send(bytes("<|MESSAGE|>;"+line.strip(),"UTF-8"))
+                                    sleep(1/1000)
         except ConnectionResetError:
             self.log("DECONNECTON","Client déconécté",LOG_INFO)
             self.connected = False
@@ -107,7 +121,7 @@ class MultiClient():
             if client.connected == True:
                 if self.config.configDic["LOG_LV"]>=LOG_TX:
                     self.config.log.write("TX",msg)
-                client.client.send(bytes(msg,"UTF-8"))
+                client.send(msg)
             else:
                 tmp.append(client)
         for client in tmp:
@@ -120,7 +134,7 @@ class MultiClient():
                 tmp.append(client)
         for client in tmp:
             self._clientList.remove(client)
-#=============================
+#=================================================
 def init():
     "Fonction désiné à initialisé le serveur"
     test=[False,False]
@@ -190,8 +204,8 @@ def init():
             config.log.write("CONFIG",item+":"+str(config.configDic[item]))
     ###Renvoie le résultat de l'initialisation
     return server,account,clients,config
-#===============================================
-#===============================================
+#=================================================
+#=================================================
 server,account,clients,config = init()#Initialise le serveur
 
 while True:

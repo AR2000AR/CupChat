@@ -24,4 +24,4 @@ class Crypto():
         "Retunr a bytes str"
         if type(cipher_text)==str:
             cipher_text=bytes(cipher_text,"UTF-8")
-        return self._local_cipher.decrypt(plain_text)
+        return self._local_cipher.decrypt(cipher_text)

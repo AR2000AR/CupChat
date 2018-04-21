@@ -21,6 +21,32 @@ global wrong,id_status,fen,client,config,stop
 id_status=False  #variable de verification de connection
 stop=False
 wrong=0
+#DEFINITIO DES CLASSES============================
+class def_gif(Label):
+        def __init__(self, master, filename, speed): #définit speed 
+                self.speed = speed
+                #speed: le delay en milliseconde entre chaques images
+                self.frames = [] # liste permettant de stocker les images du gif
+                i = 0
+                while True:
+                    try:
+                        p = PhotoImage(file=filename, format="gif - {}".format(i))
+                        #prend les images du gif
+                    except TclError:
+                        break #la boucle s'arrête
+                    self.frames.append(p) #on stock dans la liste les images
+                    i += 1     
+                super().__init__(master, image=self.frames[0])
+                self.frame = 0
+                self.num_frames = i
+                self.after(self.speed, self._animate) #fait attendre (vitesse) et appelle la fonction animate
+                
+        def _animate(self):
+            self.frame = (self.frame + 1) % self.num_frames
+            # permet de faire une sorte de boucle allant de 1 à nombre max d'image
+            self['image'] = self.frames[self.frame] #intégre l'image dans les options
+            self.after(self.speed, self._animate) #fait attendre (vitesse) et appelle la fonction animate
+
 #DEFINITION DES FONCTIONS=========================
 def init():
     if os.path.exists("Data/Client/config.cfg") and os.path.isfile("Data/Client/config.cfg"):
@@ -162,31 +188,6 @@ def login_screen(theme):
     def leave_c(event):
         bouton_créer.configure(bg="#525a8e")
     #======================================================================================================
-    class def_gif(Label):
-        def __init__(self, master, filename, speed): #définit speed 
-                self.speed = speed
-                #speed: le delay en milliseconde entre chaques images
-                self.frames = [] # liste permettant de stocker les images du gif
-                i = 0
-                while True:
-                    try:
-                        p = PhotoImage(file=filename, format="gif - {}".format(i))
-                        #prend les images du gif
-                    except TclError:
-                        break #la boucle s'arrête
-                    self.frames.append(p) #on stock dans la liste les images
-                    i += 1     
-                super().__init__(master, image=self.frames[0])
-                self.frame = 0
-                self.num_frames = i
-                self.after(self.speed, self._animate) #fait attendre (vitesse) et appelle la fonction animate
-                
-        def _animate(self):
-            self.frame = (self.frame + 1) % self.num_frames
-            # permet de faire une sorte de boucle allant de 1 à nombre max d'image
-            self['image'] = self.frames[self.frame] #intégre l'image dans les options
-            self.after(self.speed, self._animate) #fait attendre (vitesse) et appelle la fonction animate
-
     fen = build_fen("Connection",theme)
     fen.minsize(width=650, height=550)
     gif = def_gif(fen, filename='Data/Client/image/gif-nuit.gif', speed=40)

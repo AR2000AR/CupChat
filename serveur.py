@@ -23,7 +23,7 @@ class ClientThread(threading.Thread):
         self.account=account
         self.clients=clients
         self.config=config
-        self.secue=0
+        self.secure=0
         self.h=LimFile("Data/Serveur/historique.txt",100)#Ouvre le fichier d'historique avec la classe LimFile qui limite la taille de celui ci
 
     def send(self,msg):

@@ -128,32 +128,33 @@ def login_screen(theme):
     def identification(new):
         global wrong,id_status
         #recevoir la confirmation du serveur
-        msg=reciveMsg(client,2048,theType=str)
-        msg=config.rsa.decrypt(msg)
-        msg=msg.split(";")
-        if new==True:
-            if msg[1]=="DONE":
-                
-                config.log.write("INFO",' compte créer avec succée')
-                showinfo('CupChat Connection','votre compte à été créer !')
-                id_status=False
-            
-            elif msg[1]=="EXIST":
-                config.log.write("ERREUR",'compte deja existant')
-                showwarning('CupChat Connection','Désolé ce compte exite déja')
-                wrong=1
-                id_status=False
-        else:
-            if msg[1]=="<|ACCEPTED|>":
-                config.log.write("INFO",'conection reussi !')
-                id_status=True
-                
-            elif msg[1]=="<|REJECTED|>":
-                config.log.write("ERREUR","Erreur de mot de passe, ou de pseudo")
-                wrong=2
-                id_status=False
-            else :
-                config.log.write("ERREUR","probléme avec le serveur")
+        msg=reciveMsg(client,1024,theType=bytes)
+        if msg != b'':
+                msg=str(config.rsa.decrypt(msg))[2:-1]
+                msg=msg.split(";")
+                if new==True:
+                    if msg[1]=="DONE":
+                        
+                        config.log.write("INFO",' compte créer avec succée')
+                        showinfo('CupChat Connection','votre compte à été créer !')
+                        id_status=False
+                    
+                    elif msg[1]=="EXIST":
+                        config.log.write("ERREUR",'compte deja existant')
+                        showwarning('CupChat Connection','Désolé ce compte exite déja')
+                        wrong=1
+                        id_status=False
+                else:
+                    if msg[1]=="<|ACCEPTED|>":
+                        config.log.write("INFO",'conection reussi !')
+                        id_status=True
+                        
+                    elif msg[1]=="<|REJECTED|>":
+                        config.log.write("ERREUR","Erreur de mot de passe, ou de pseudo")
+                        wrong=2
+                        id_status=False
+                    else :
+                        config.log.write("ERREUR","probléme avec le serveur")
 
     def auth(new):
         global wrong,login
@@ -169,12 +170,12 @@ def login_screen(theme):
             fen.destroy()
         else:
             if new==True:
-                client.send(bytes(str(config.rsa.encrypt('<|ACCOUNT|>;<|CREATE|>;'+frame_login.get()+";"+frame_password.get())),"UTF-8"))
+                client.send(config.rsa.encrypt(bytes('<|ACCOUNT|>;<|CREATE|>;'+frame_login.get()+";"+frame_password.get(),"UTF-8")))
                 fen.destroy()
                 password=""
                 identification(new)    
             elif new==False:
-                client.send(bytes(str(config.rsa.encrypt('<|ACCOUNT|>;<|AUTH|>;'+frame_login.get()+";"+frame_password.get())),"UTF-8"))    
+                client.send(config.rsa.encrypt(bytes('<|ACCOUNT|>;<|AUTH|>;'+frame_login.get()+";"+frame_password.get(),"UTF-8")))  
                 fen.destroy()
                 password=""
                 identification(new)
@@ -190,8 +191,8 @@ def login_screen(theme):
     #======================================================================================================
     fen = build_fen("Connection",theme)
     fen.minsize(width=650, height=550)
-    gif = def_gif(fen, filename='Data/Client/image/gif-nuit.gif', speed=40)
-    gif.pack()
+    #gif = def_gif(fen, filename='Data/Client/image/gif-nuit.gif', speed=40)
+    #gif.pack()
     fen.focus_force()
     fen.update_idletasks()
     try:
@@ -217,18 +218,20 @@ def login_screen(theme):
             config.log.write("ERREUR",'la connexion a échouée avec le serveur')
             return False
         
-    client.send(b'<|CONNECTION|>;'+bytes(config.rsa.getPublicKey(),"UTF-8"))
     try:
-        msg = reciveMsg(client,1024,theType=str)
-        msg=msg.split(";")
-        if msg[0] == "<|CONNECTION|>":
-            config.rsa.setPublicKey(msg[1])
+        while True:
+                msg = reciveMsg(client,1024,theType=str)
+                msg=msg.split(";")
+                if msg[0] == "<|CONNECTION|>":
+                    config.rsa.setPublicKey(msg[1])
+                    client.send(b'<|CONNECTION|>;'+config.rsa.getPublicKey())
+                    break
     except:
-        config.log.write("ERREUR",'le serveur à mit trop de temps à répondre')
+        config.log.write("ERREUR",'l\'échange de clef n\'a pas été fait')
         return False
          
     #Si la connection a réusie=============================================================================
-    tmp.pack_forget()
+    #gif.pack_forget()
     #titre principal page d'accueil et logo
     try:
         logo= PhotoImage(file=theme[2])
@@ -304,7 +307,7 @@ def chat_screen(theme,login):
     def send_message(bob=''):
         global client
         if len(send.get())>0:
-            client.send(bytes(str(config.rsa.encrypt('<|MESSAGE|>;'+login+';'+send.get())),"UTF-8"))
+            client.send(config.rsa.encrypt(bytes('<|MESSAGE|>;'+login+';'+send.get(),"UTF-8")))
             send.delete(0,END)#Efface le contenu du widget Entry
     
     fen=build_fen("",theme)
@@ -350,7 +353,7 @@ def chat_screen(theme,login):
     reception_msg = thread_message(cadre_history,client,login,theme)
     reception_msg.start()
     #envoie d'une demande d'historique au serveur
-    client.send(bytes(str(config.rsa.encrypt('<|HISTORIQUE|>',"UTF-8"))))
+    client.send(config.rsa.encrypt(bytes('<|HISTORIQUE|>',"UTF-8")))
     fen.mainloop()
 #CLASSES==========================================
 class thread_message(threading.Thread):
@@ -363,33 +366,31 @@ class thread_message(threading.Thread):
         self.client=client
         self.login=login
         self.i=0
-        print(login)
 
     def run(self):
         while self.stop==False:
             try:
-                msg=reciveMsg(client,2048,theType=str)
+                msg=reciveMsg(client,2048,theType=bytes)
             except:
                 self.stop=True
                 
             if self.stop==True:
                 break
-            msg=config.rsa.decrypt(msg)
-            a=msg.split(";")
-            if a[0]=="<|MESSAGE|>":
-                a=msg.split("<|MESSAGE|>")
-                del a[0]
-                for line in a:
-                    print(line)
-                    content=line.split(";")
-                    del content[0]
-                    print(content)
-                    if content[0]==self.login:
-                        Label(self.frame,text="You : "+content[1], justify='right',font=("Corbel","9","bold")).grid(row=self.i,column=0,sticky=E)
-                    else:
-                        Label(self.frame,text=content[0]+" : "+content[1],font=("Corbel","9","bold")).grid(row=self.i,column=0,sticky=W)
-                    self.frame.update_idletasks()
-                    self.i = self.i+1
+            if msg != b'':
+                    msg=str(config.rsa.decrypt(msg))[2:-1]
+                    a=msg.split(";")
+                    if a[0]=="<|MESSAGE|>":
+                        a=msg.split("<|MESSAGE|>")
+                        del a[0]
+                        for line in a:
+                            content=line.split(";")
+                            del content[0]
+                            if content[0]==self.login:
+                                Label(self.frame,text="You : "+content[1], justify='right',font=("Corbel","9","bold")).grid(row=self.i,column=0,sticky=E)
+                            else:
+                                Label(self.frame,text=content[0]+" : "+content[1],font=("Corbel","9","bold")).grid(row=self.i,column=0,sticky=W)
+                            self.frame.update_idletasks()
+                            self.i = self.i+1
 #PROGRAMME PRINCIPAL==============================
 config,theme = init()
 while id_status==False and stop == False:

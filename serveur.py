@@ -27,7 +27,7 @@ class ClientThread(threading.Thread):
         self.h=LimFile("Data/Serveur/historique.txt",100)#Ouvre le fichier d'historique avec la classe LimFile qui limite la taille de celui ci
 
     def send(self,msg):
-        self.client.send(bytes(str(config.rsa.encrypt(msg)),"UTF-8"))
+        self.client.send(config.rsa.encrypt(msg))
     
     def log(self,name,content,lv):
         if self.config.configDic["LOG_LV"]>=lv:
@@ -36,7 +36,7 @@ class ClientThread(threading.Thread):
     def run(self):
         try:
             while self.connected == True:
-                msg = reciveMsg(self.client,1024,theType=str)
+                msg = reciveMsg(self.client,1024,theType=bytes)
                 ####Gestion des erreurs
                 if msg == False:
                     self.log("DECONNECTON","Client déconécté",LOG_INFO)
@@ -44,20 +44,20 @@ class ClientThread(threading.Thread):
                     self.client.close()
                     self.clients.clear()
                     break
-                elif msg=="":
-                    pass
                 #------------------------------
                 else:
                     if self.secure == 0:
-                        self.client.send(b'<|CONNECTION|>;'+bytes(config.rsa.getPublicKey(),"UTF-8"))
+                        self.client.send(b'<|CONNECTION|>;'+config.rsa.getPublicKey())
                         self.secure = 1
                     elif self.secure == 1:
-                        msg=msg.split(";")
-                        if msg[0] == "<|CONNECTION|>":
+                        msg=msg.split(b";")
+                        if msg[0] == b"<|CONNECTION|>":
                             config.rsa.setPublicKey(msg[1])
+                            self.secure=2
+                            self.log("CONNECTION","Echange de clef effféctué",LOG_INFO)
                                          
-                    else:
-                        msg=config.rsa.decrypt(msg)
+                    elif self.secure == 2 and msg!=b"":
+                        msg=str(config.rsa.decrypt(msg))[2:-1]
                         if msg.split()[0]!="<|ACCOUNT|>":
                             self.log("RX",msg,LOG_RX)
                         msg=msg.split(";")
@@ -93,7 +93,7 @@ class ClientThread(threading.Thread):
                                 for line in file:
                                     self.log("TX",line.strip(),LOG_TX)
                                     self.send(bytes("<|MESSAGE|>;"+line.strip(),"UTF-8"))
-                                    sleep(1/1000)
+                                    sleep(1/10)
         except ConnectionResetError:
             self.log("DECONNECTON","Client déconécté",LOG_INFO)
             self.connected = False

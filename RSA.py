@@ -15,9 +15,13 @@ class Crypto():
         self._dist_cipher = PKCS1_OAEP.new(self._dist_key)
 
     def encrypt(self,plain_text):
-        "text must be a bytes str \nReturn a bytes str"
+        "Return a bytes str"
+        if type(plain_text)==str:
+            plain_text=bytes(plain_text,"UTF-8")
         return self._dist_cipher.encrypt(plain_text)
 
     def decrypt(self,cipher_text):
-        "cipher_text must be a bytes str \n Retunr a bytes str"
+        "Retunr a bytes str"
+        if type(cipher_text)==str:
+            cipher_text=bytes(cipher_text,"UTF-8")
         return self._local_cipher.decrypt(plain_text)

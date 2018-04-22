@@ -23,7 +23,7 @@ class Config():
             for key in self.configDic:
                 try:
                     for line in self._comment[key]:
-                        file.write(line+"�\n")
+                        file.write(line+"\n")
                 except KeyError:
                     pass
                 file.write(self._typeDic[key]+";"+key+";"+str(self.configDic[key])+"\n")

@@ -1,0 +1,2 @@
+[15/4/2018|16:2:55] <CONNECTION> Connected to (192.168.1.18:51648)
+[15/4/2018|16:3:9] <EXIT> Interception de la fermeture de la fenetre

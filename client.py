@@ -17,11 +17,11 @@ from socketTools import *
 from configuration import *
 from VerticalScrolledFrame import *
 #Definition des variables globals=================
-global wrong,id_status,fen,client,config,stop,fen_o
+global wrong,id_status,fen,client,config,stop,fen_o,police_size
 id_status=False  #variable de verification de connection
 stop=False
 wrong=0
-#DEFINITIO DES CLASSES============================
+#DEFINITION DES CLASSES============================
 class def_gif(Label):
         def __init__(self, master, filename, speed): #définit speed 
                 self.speed = speed
@@ -333,16 +333,16 @@ def chat_screen(theme,login):
             client.send(config.rsa.encrypt(bytes('<|MESSAGE|>;'+login+';'+send.get(),"UTF-8")))
             send.delete(0,END)#Efface le contenu du widget Entry
             
-    #page des options
+    #page des options==
     def fen_option(bob=''):
-        global val,fen_o,config
+        #init
+        global val,fen_o,config,reception_msg,val2
         fen_o= Tk()
         fen_o.title(" CupChat "+"Option")
         fen_o['bg']=theme[0]
         fen_o.minsize(width=300, height=300)
         fen_o.resizable(False,False)
         fen_o.focus_force()
-        #change l'icone
         try:
             if sys.platform=='win32':
                 fen_o.iconbitmap('Data/Client/image/roue.ico')
@@ -351,11 +351,43 @@ def chat_screen(theme,login):
         except:
             pass
 
+        def gogogo():
+            global fen_o,fen,val2
+            #relance la fenetre principale
+            fen_o.destroy()
+            fen.mainloop()
+        def save_option():
+            global fen_o,val,fen,reception_msg
+            config.setConf("int","THEME",val.get())
+            if config.configDic["THEME"]==0:
+                theme=["#60636d",'#edf0f9','Data/Client/image/cup-nuit.gif',"Data/Client/image/roue.gif"]
+            elif config.configDic["THEME"]==1:
+                theme=["white","black",'Data/Client/image/cup-jour.gif',"Data/Client/image/roue.gif"]
+            config.setConf("int","POLICE",val2.get())
+            fen_o.destroy()
+            try:
+                reception_msg.stop=True
+            except:
+                pass
+            #rappel l'appli pour la mettre à jour
+            appli(theme,login)
+        def restart():
+            global fen_o,fen
+            clean_end()
+            id_status=False
+            stop=False
+            wrong=0
+            with open("Data/Client/config.cfg","w") as f:
+                    f.write("bool;LOG;True\nint;PORT;51648\nstr;SERVEUR;172.18.144.187\n#0 : Night 1 : Day\nint;THEME;0\nint;POLICE;14")
+                    f.close()
+        def police(bob=''):
+                global val2
+            titre_test.configure(font=("MV-Boli",val2.get(),"bold"))
         frame_o=Frame(fen_o,bg=theme[0])
         frame_o.pack(anchor=NW,fill='both',expand=1,pady=5,padx=5)
         #option switch jour nuit
-        frame_theme1=Label(frame_o,fg=theme[1],font=("MV-Boli","15","bold"),text="Théme : ",bg=theme[0])
-        frame_theme1.pack(anchor=NW,fill='x')
+        frame_theme1=Label(frame_o,fg=theme[1],font=("MV-Boli","11","bold"),text="Théme : ",bg=theme[0])
+        frame_theme1.pack(anchor=NW)
         frame_theme=Frame(frame_o,bg=theme[0],pady=5,padx=5)
         frame_theme.pack(anchor=NW,fill='x')
         val = IntVar()
@@ -364,31 +396,18 @@ def chat_screen(theme,login):
         n.pack(side=LEFT,expand=1)
         j = Radiobutton(frame_theme,width=10, variable=val,pady=3,offrelief=FLAT, text="Jour",selectcolor="#57609b",font=("","13","bold"), value=1,indicatoron=0,bg="#57609b",fg='#edf0f9',relief=FLAT)
         j.pack(side=LEFT,expand=1)
-
-        def gogogo():
-            global fen_o,fen
-            #relance la fenetre principale
-            fen_o.destroy()
-            fen.mainloop()
-        def save_option():
-            global fen_o,val,fen
-            config.setConf("int","THEME",val.get())
-            if config.configDic["THEME"]==0:
-                theme=["#60636d",'#edf0f9','Data/Client/image/cup-nuit.gif',"Data/Client/image/roue.gif"]
-            elif config.configDic["THEME"]==1:
-                theme=["white","black",'Data/Client/image/cup-jour.gif',"Data/Client/image/roue.gif"]
-            fen.update_idletasks()
-            gogogo()
-        def restart():
-            global fen_o,val,fen
-            clean_end()
-            id_status=False
-            stop=False
-            wrong=0
-            with open("Data/Client/config.cfg","w") as f:
-                    f.write("bool;LOG;True\nint;PORT;51648\nstr;SERVEUR;172.18.144.187\n#0 : Night 1 : Day\nint;THEME;0")
-                    f.close()
-            
+        #option taille du texte
+        frame_barre=Frame(frame_o,bg=theme[0],pady=20)
+        frame_barre.pack(fill='x')
+        titre_barre=Label(frame_barre,fg=theme[1],font=("MV-Boli",'11',"bold"),text="Taille de la police :",bg=theme[0])
+        titre_barre.pack(anchor=NW)
+        val2 = IntVar()
+        barre=Scale(frame_barre,bd=0,variable=val2,activebackground=theme[0],relief=FLAT, orient='horizontal',highlightthickness=0,from_=13, to=19,resolution=1, tickinterval=2,bg=theme[0],fg=theme[1],font=("MV-Boli","12","bold"),command=police )
+        barre.pack(fill='x')
+        frame_test=Frame(frame_o,bg=theme[0])
+        frame_test.pack()
+        titre_test=Label(frame_test,fg=theme[1],font=("MV-Boli",config.configDic["POLICE"],"bold"),text="Test",bg=theme[0])
+        titre_test.pack(anchor=W)
         #effet visuel
         def hover_s(event):
             bouton_save.configure(bg="#57609b")        
@@ -425,7 +444,7 @@ def chat_screen(theme,login):
         bouton_deconnect.bind('<Leave>',leave_d)
         fen_o.mainloop()
 
-    
+    #appli principale=====
     fen=build_fen("",theme)
     fen.minsize(width=600, height=500) 
     #panneau latéral  
@@ -497,9 +516,9 @@ class thread_message(threading.Thread):
                             content=line.split(";")
                             del content[0]
                             if content[0]==self.login:
-                                Message(self.frame,text="You : "+content[1], justify='right',font=("Corbel","9","bold"),aspect=250,bg="#3e4047").grid(row=self.i,column=0,sticky=E)
+                                Message(self.frame,text="You : "+content[1], justify='right',font=("Corbel",config.configDic["POLICE"],"bold"),aspect=250,bg="#3e4047").grid(row=self.i,column=0,sticky=E)
                             else:
-                                Message(self.frame,text=content[0]+" : "+content[1],font=("Corbel","9","bold"),aspect=250,bg="#3e4047").grid(row=self.i,column=0,sticky=W)
+                                Message(self.frame,text=content[0]+" : "+content[1],font=("Corbel",config.configDic["POLICE"],"bold"),aspect=250,bg="#3e4047").grid(row=self.i,column=0,sticky=W)
                             self.frame.update_idletasks()
                             self.i = self.i+1
                     else:

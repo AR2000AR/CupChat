@@ -23,7 +23,7 @@ stop=False
 wrong=0
 #DEFINITION DES CLASSES============================
 class def_gif(Label):
-        def __init__(self, master, filename, speed): #définit speed 
+        def __init__(self, master, filename, speed): #définit speed
                 self.speed = speed
                 #speed: le delay en milliseconde entre chaques images
                 self.frames = [] # liste permettant de stocker les images du gif
@@ -35,12 +35,12 @@ class def_gif(Label):
                     except TclError:
                         break #la boucle s'arrête
                     self.frames.append(p) #on stock dans la liste les images
-                    i += 1     
+                    i += 1
                 super().__init__(master, image=self.frames[0])
                 self.frame = 0
                 self.num_frames = i
                 self.after(self.speed, self._animate) #fait attendre (vitesse) et appelle la fonction animate
-                
+
         def _animate(self):
             self.frame = (self.frame + 1) % self.num_frames
             # permet de faire une sorte de boucle allant de 1 à nombre max d'image
@@ -60,7 +60,7 @@ def init():
             os.makedirs("Data/Client")
         except FileExistsError:
             pass
-        
+
     config = Config("Data/Client/config.cfg")
     log = Log("Data/Client/log.txt",config.configDic["LOG"],mode=LOG_REPLACE)
     config.setLog(log)
@@ -98,12 +98,12 @@ def build_fen(titre,theme):
     #change l'icone
     try:
         if sys.platform=='win32':
-            fen.iconbitmap('Data/Client/image/icone.ico')    
+            fen.iconbitmap('Data/Client/image/icone.ico')
         elif sys.platform=='linux2':
             fen.iconbitmap('Data/Client/image/icone.xbm')
     except:
         pass
-    
+
     fen.protocol("WM_DELETE_WINDOW", clean_end)
     return fen
 
@@ -117,7 +117,7 @@ def login_screen(theme):
                 bouton_quit.configure(state=DISABLED)
         except NameError:
                 pass
-    
+
     def id_create():
         global wrong,config
         auth(True)
@@ -137,11 +137,11 @@ def login_screen(theme):
                 msg=msg.split(";")
                 if new==True:
                     if msg[1]=="DONE":
-                        
+
                         config.log.write("INFO",' compte créer avec succée')
                         showinfo('CupChat Connection','votre compte à été créer !')
                         id_status=False
-                    
+
                     elif msg[1]=="EXIST":
                         config.log.write("ERREUR",'compte deja existant')
                         showwarning('CupChat Connection','Désolé ce compte exite déja')
@@ -151,7 +151,7 @@ def login_screen(theme):
                     if msg[1]=="<|ACCEPTED|>":
                         config.log.write("INFO",'connection reussi !')
                         id_status=True
-                        
+
                     elif msg[1]=="<|REJECTED|>":
                         config.log.write("ERREUR","Erreur de mot de passe, ou de pseudo")
                         wrong=2
@@ -169,11 +169,11 @@ def login_screen(theme):
         else:
             login=frame_login.get()
             password=frame_password.get()
-            
+
         try:
-                if Var.get()==0:
-                    config.setConf("int","LOGIN",login)
-                    config.setConf("int","PASSWORD",password)
+            if Var.get()==1:
+                config.setConf("str","LOGIN",login)
+                config.setConf("str","PASSWORD",password)
         except NameError:
                 pass
 
@@ -187,18 +187,27 @@ def login_screen(theme):
                 client.send(config.rsa.encrypt(bytes('<|ACCOUNT|>;<|CREATE|>;'+login+";"+password,"UTF-8")))
                 fen.destroy()
                 password=""
-                identification(new)    
+                identification(new)
             elif new==False:
-                client.send(config.rsa.encrypt(bytes('<|ACCOUNT|>;<|AUTH|>;'+login+";"+password,"UTF-8")))  
+                client.send(config.rsa.encrypt(bytes('<|ACCOUNT|>;<|AUTH|>;'+login+";"+password,"UTF-8")))
                 fen.destroy()
                 password=""
                 identification(new)
             elif new=="Memo":
-                client.send(config.rsa.encrypt(bytes('<|ACCOUNT|>;<|AUTH|>;'+login+";"+password,"UTF-8")))  
+                client.send(config.rsa.encrypt(bytes('<|ACCOUNT|>;<|AUTH|>;'+login+";"+password,"UTF-8")))
                 fen.destroy()
                 password=""
                 identification(False)
-        
+
+    #effet visuel
+    def hover_v(event):
+        bouton_valider.configure(bg="#57609b")
+    def hover_c(event):
+        bouton_créer.configure(bg="#57609b")
+    def leave_v(event):
+        bouton_valider.configure(bg="#525a8e")
+    def leave_c(event):
+        bouton_créer.configure(bg="#525a8e")
     #======================================================================================================
     fen = build_fen("Connection",theme)
     fen.minsize(width=650, height=550)
@@ -219,7 +228,7 @@ def login_screen(theme):
                 titre_erreur= Label(fen, text="Probléme de connexion avec le serveur",bg=theme[0],fg='Red', font=("MV-Boli","bold"),justify=CENTER )
                 titre_erreur.pack()
                 titre_erreur.place(anchor=N ,relx=0.5, rely=0.1)
-                bouton_quit = Button(fen, text="Quitter",command=fen.destroy,relief=FLAT,bg=theme[0],activebackground=theme[0],bd=0,font="40")
+                bouton_quit = Button(fen, text="Quitter",command=clean_end,relief=FLAT,bg=theme[0],activebackground=theme[0],bd=0,font="40")
                 bouton_quit.pack()
                 bouton_quit.place(anchor=SE,relx=1.0, rely=1.0)
                 config.log.write("ERREUR",'la connexion a échouée avec le serveur')
@@ -228,7 +237,7 @@ def login_screen(theme):
         else:
             config.log.write("ERREUR",'la connexion a échouée avec le serveur')
             return False
-        
+
     try:
         while True:
                 msg = reciveMsg(client,1024,theType=str)
@@ -240,7 +249,7 @@ def login_screen(theme):
     except:
         config.log.write("ERREUR",'l\'échange de clef n\'a pas été fait')
         return False
-         
+
     #Si la connection a réusie=============================================================================
     #gif.pack_forget()
     #titre principal page d'accueil et logo
@@ -256,7 +265,7 @@ def login_screen(theme):
         fa= Frame(fen, bg=theme[0])
         fa.pack()
         fa.place(anchor=N ,relx=0.5, rely=0.4)
-        #partie "identification"  
+        #partie "identification"
         titre_login= Label(fa, text="Identifiant :",bg=theme[0],fg=theme[1],font=("MV-Boli"),justify=LEFT,width= 30)
         titre_login.pack()
         fa3= Frame(fa, bg="#4b4e56", pady=2, padx=2)
@@ -276,20 +285,16 @@ def login_screen(theme):
         frame_password = Entry(fa2, textvariable=value,show="*",width=30,font=('MV-Boli'),relief=FLAT)
         frame_password.bind("<Return>",id_connect)
         frame_password.pack()
-        #case à cocher pour memoriser
-        Var = StringVar()
-        memo  = Checkbutton(fen, text='Se souvenir de moi',
-        variable=Var, onvalue='1', offvalue='0',fg=theme[1],bg=theme[0],activebackground=theme[0])
         #en cas d'ereur de connexion affiche un message rouge
         if wrong==1:
-            titre_erreur= Label(fa,text="Désolé ce compte exite déja",bg=theme[0],fg='Red',font=("MV-Boli,bold"),justify=CENTER,width= 30)  
+            titre_erreur= Label(fa,text="Désolé ce compte exite déja",bg=theme[0],fg='Red',font=("MV-Boli,bold"),justify=CENTER,width= 30)
         if wrong==2:
             titre_erreur= Label(fa,text="vous vous êtes trompé de mot de passe\nou de pseudo",bg=theme[0],fg='Red',font=("MV-Boli,bold"),justify=CENTER,width= 30)
         if wrong==3:
             titre_erreur= Label(fa,text="remplissez les deux champs",bg=theme[0],fg='Red',font=("MV-Boli,bold"),justify=CENTER,width= 30)
         if wrong!=0:
             titre_erreur.pack()
-        #frame des boutons de connection et de création de compte      
+        #frame des boutons de connection et de création de compte
         fbouton= Frame(fa, bg=theme[0], pady=30)
         fbouton.pack()
         fbouton_espace= Frame(fbouton, bg=theme[0], pady=20)
@@ -299,22 +304,19 @@ def login_screen(theme):
         frame_espace1.pack()
         frame_espace2=Frame(fbouton, pady=5, bg=theme[0])
         frame_espace2.pack()
-        #effet visuel
-        def hover_v(event):
-            bouton_valider.configure(bg="#57609b")    
-        def hover_c(event):
-             bouton_créer.configure(bg="#57609b")        
-        def leave_v(event):
-            bouton_valider.configure(bg="#525a8e")
-        def leave_c(event):
-            bouton_créer.configure(bg="#525a8e")
+        frame_espace3=Frame(fbouton, pady=5, bg=theme[0])
+        frame_espace3.pack()
         #bouton pour se connecter
         bouton_valider = Button(frame_espace1,text="Connection",command=id_connect, relief=FLAT, width=20,bg="#525a8e",fg=theme[1],font="40",pady=8,activebackground="#57609b",bd=0)
         bouton_valider.pack()
         bouton_valider.bind('<Enter>',hover_v)
         bouton_valider.bind('<Leave>',leave_v)
-        #bouton pour créer un compte 
-        bouton_créer = Button(frame_espace2,text="Inscription",command=id_create,relief=FLAT,width=20,bg="#525a8e",fg=theme[1],font="40",pady=8,activebackground="#57609b",bd=0)
+        #case à cocher pour memoriser
+        Var = IntVar()
+        memo  = Checkbutton(frame_espace2, text='Se souvenir de moi',variable=Var,bg=theme[0],activebackground=theme[0])
+        memo.pack()
+        #bouton pour créer un compte
+        bouton_créer = Button(frame_espace3,text="Inscription",command=id_create,relief=FLAT,width=20,bg="#525a8e",fg=theme[1],font="40",pady=8,activebackground="#57609b",bd=0)
         bouton_créer.pack()
         bouton_créer.bind('<Enter>',hover_c)
         bouton_créer.bind('<Leave>',leave_c)
@@ -323,6 +325,7 @@ def login_screen(theme):
         bouton_quit.pack()
         bouton_quit.place(anchor=SE,relx=1.0, rely=1.0)
         fen.mainloop()
+        return client,login
 #-------------------------------------------------
 def chat_screen(theme,login):
     global fen,config,client,reception_msg,fen_o
@@ -332,12 +335,12 @@ def chat_screen(theme,login):
         if len(send.get())>0:
             client.send(config.rsa.encrypt(bytes('<|MESSAGE|>;'+login+';'+send.get(),"UTF-8")))
             send.delete(0,END)#Efface le contenu du widget Entry
-            
+
     #page des options==
     def fen_option(bob=''):
         #init
-        global val,fen_o,config,reception_msg,val2
-        fen_o= Tk()
+        global val,fen_o,config,reception_msg,val2,fen
+        fen_o= Toplevel(fen)
         fen_o.title(" CupChat "+"Option")
         fen_o['bg']=theme[0]
         fen_o.minsize(width=300, height=300)
@@ -356,6 +359,7 @@ def chat_screen(theme,login):
             #relance la fenetre principale
             fen_o.destroy()
             fen.mainloop()
+
         def save_option():
             global fen_o,val,fen,reception_msg
             config.setConf("int","THEME",val.get())
@@ -365,24 +369,39 @@ def chat_screen(theme,login):
                 theme=["white","black",'Data/Client/image/cup-jour.gif',"Data/Client/image/roue.gif"]
             config.setConf("int","POLICE",val2.get())
             fen_o.destroy()
+            fen.destroy()
             try:
                 reception_msg.stop=True
             except:
                 pass
             #rappel l'appli pour la mettre à jour
-            appli(theme,login)
+            chat_screen(theme,login)
         def restart():
-            global fen_o,fen
+            global fen_o,fen,stop,id_status,wrong
             clean_end()
             id_status=False
             stop=False
             wrong=0
-            with open("Data/Client/config.cfg","w") as f:
-                    f.write("bool;LOG;True\nint;PORT;51648\nstr;SERVEUR;172.18.144.187\n#0 : Night 1 : Day\nint;THEME;0\nint;POLICE;14")
-                    f.close()
+            config.setConf("str","LOGIN","False")
+            config.setConf("str","PASSWORD","False")
+
         def police(bob=''):
-                global val2
+            global val2
             titre_test.configure(font=("MV-Boli",val2.get(),"bold"))
+        #effet visuel
+        def hover_s(event):
+            bouton_save.configure(bg="#57609b")
+        def leave_s(event):
+            bouton_save.configure(bg="#525a8e")
+        def hover_a(event):
+            bouton_annuler.configure(bg="#57609b")
+        def leave_a(event):
+            bouton_annuler.configure(bg="#525a8e")
+        def hover_d(event):
+            bouton_deconnect.configure(bg="#8e1212")
+        def leave_d(event):
+            bouton_deconnect.configure(bg="#840f0f")
+
         frame_o=Frame(fen_o,bg=theme[0])
         frame_o.pack(anchor=NW,fill='both',expand=1,pady=5,padx=5)
         #option switch jour nuit
@@ -408,19 +427,7 @@ def chat_screen(theme,login):
         frame_test.pack()
         titre_test=Label(frame_test,fg=theme[1],font=("MV-Boli",config.configDic["POLICE"],"bold"),text="Test",bg=theme[0])
         titre_test.pack(anchor=W)
-        #effet visuel
-        def hover_s(event):
-            bouton_save.configure(bg="#57609b")        
-        def leave_s(event):
-            bouton_save.configure(bg="#525a8e")
-        def hover_a(event):
-            bouton_annuler.configure(bg="#57609b")        
-        def leave_a(event):
-            bouton_annuler.configure(bg="#525a8e")
-        def hover_d(event):
-            bouton_deconnect.configure(bg="#8e1212")        
-        def leave_d(event):
-            bouton_deconnect.configure(bg="#840f0f")
+
         frame_bouton_option=Frame(frame_o,bg=theme[0])
         frame_bouton_option.place(anchor=SE,relx=1.0, rely=1.0)
         #bouton pour enregistrer
@@ -435,7 +442,7 @@ def chat_screen(theme,login):
         bouton_annuler.pack()
         bouton_annuler.bind('<Enter>',hover_a)
         bouton_annuler.bind('<Leave>',leave_a)
-        #bouton deconnexion 
+        #bouton deconnexion
         frame_bouton2_option=Frame(frame_bouton_option,padx=4,bg=theme[0])
         frame_bouton2_option.pack()
         bouton_deconnect = Button(frame_bouton2_option, text="Deconnexion", relief=FLAT,bg="#840f0f",fg='white',font="40",activebackground="#8e1212",bd=0,command=restart)
@@ -446,8 +453,8 @@ def chat_screen(theme,login):
 
     #appli principale=====
     fen=build_fen("",theme)
-    fen.minsize(width=600, height=500) 
-    #panneau latéral  
+    fen.minsize(width=600, height=500)
+    #panneau latéral
     paneau_lateral= Frame(fen, bg="#3e4047",width=70)
     paneau_lateral.pack(fill='y',side=LEFT)
     #espace pour le nom du serveur
@@ -458,20 +465,20 @@ def chat_screen(theme,login):
     cadre_option= Frame(paneau_lateral, bg="#3e4047")
     cadre_option.pack(side=BOTTOM,fill='x')
     boutton_option= Button(cadre_option, bg="#3e4047",text="option",fg=theme[1],font=("MV-Boli","11","bold"),pady=6,padx=7,image=roue,relief=FLAT,activebackground="#3e4047",bd=0,command=fen_option)
-    boutton_option.pack(side=RIGHT)     
-    #cadre des messages 
+    boutton_option.pack(side=RIGHT)
+    #cadre des messages
     cadre_principal= Frame(fen, bg="pink",width=500)
     cadre_principal.pack(expand=1, fill='both',side=LEFT)
     #envoi des message
-    value = StringVar().set("")        
+    value = StringVar().set("")
     #cadre de l'envoie des message
     cadre_message= Frame(cadre_principal, bg=theme[0],pady=12,padx=12)
     cadre_message.pack(side=BOTTOM,fill='x' )
-    cadre_message1= Frame(cadre_principal, bg=theme[0],pady=12,padx=12) 
+    cadre_message1= Frame(cadre_principal, bg=theme[0],pady=12,padx=12)
     cadre_message1.pack(side=BOTTOM,fill='x' )
-    bouton_envoyer= Button(cadre_message1, bg="#747987",text="Envoyer",fg=theme[1],font=("MV-Boli","11","bold"),pady=6,padx=7,command=send_message, relief=FLAT,activebackground="#747987", bd=0)#,image=fléche    
+    bouton_envoyer= Button(cadre_message1, bg="#747987",text="Envoyer",fg=theme[1],font=("MV-Boli","11","bold"),pady=6,padx=7,command=send_message, relief=FLAT,activebackground="#747987", bd=0)#,image=fléche
     bouton_envoyer.pack(side=RIGHT)
-    send = Entry(cadre_message1, textvariable=value,relief=FLAT,font=("MV-Boli","15"),bg='#747987', width=30)  
+    send = Entry(cadre_message1, textvariable=value,relief=FLAT,font=("MV-Boli","15"),bg='#747987', width=30)
     send.pack(side=RIGHT,fill='both',expand=1)
     #envoi des message
     send.bind('<Return>', send_message)
@@ -503,7 +510,7 @@ class thread_message(threading.Thread):
                 msg=reciveMsg(client,2048,theType=bytes)
             except:
                 self.stop=True
-                
+
             if self.stop==True:
                 break
             if msg != b'':
@@ -525,12 +532,13 @@ class thread_message(threading.Thread):
                         pass
 #PROGRAMME PRINCIPAL==============================
 config,theme = init()
-while id_status==False and stop == False:
-    #créer une boucle tant que le client n'arrive pas à se connecter
-    client,login=login_screen(theme)
-    if client == False:
-        clean_end()
-        break
+while stop == False:
+    while id_status==False and stop == False:
+        #créer une boucle tant que le client n'arrive pas à se connecter
+        client,login=login_screen(theme)
+        if client == False:
+            clean_end()
+            break
 
-if client != False and stop == False:
-    chat_screen(theme,login)
+    if client != False and stop == False:
+        chat_screen(theme,login)

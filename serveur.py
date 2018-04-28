@@ -69,6 +69,7 @@ class ClientThread(threading.Thread):
                                 if tmp==True:
                                     self.send(b'<|AUTH|>;<|ACCEPTED|>')
                                     self.log("AUTH","ACCEPTED",LOG_AUTH)
+                                    self.secure=3
                                 else:
                                     self.send(b'<|AUTH|>;<|REJECTED|>')
                                     self.log("AUTH","REJECTED",LOG_AUTH)
@@ -82,8 +83,12 @@ class ClientThread(threading.Thread):
                                     self.log("CREATE","EXIST",LOG_AUTH)
                                     self.send(b'<|ACCOUNT|>;<|CREATE|>;EXIST')
                                     
+                    #Si l'authentification est valide
+                    elif self.secure == 3 and msg != b'':
+                        msg=str(config.rsa.decrypt(msg))[2:-1]
+                        msg=msg.split(";")
                         ###Envoi de messages
-                        elif msg[0]=="<|MESSAGE|>":
+                        if msg[0]=="<|MESSAGE|>":
                             self.h.write(msg[1]+";"+msg[2])
                             self.clients.sendAll("<|MESSAGE|>;"+msg[1]+";"+msg[2])
 

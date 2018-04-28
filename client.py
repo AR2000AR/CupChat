@@ -15,51 +15,13 @@ from socket import *
 from logger import *
 from socketTools import *
 from configuration import *
-from VerticalScrolledFrame import *
+from ScrollText import *
 #Definition des variables globals=================
 global wrong,id_status,fen,client,config,stop,fen_o,police_size
 id_status=False  #variable de verification de connection
 stop=False
 wrong=0
 #DEFINITION DES CLASSES============================
-class thread_message(threading.Thread):
-    def __init__(self,cadre_history,client,login,theme):
-        threading.Thread.__init__(self)
-        self.stop=False
-        self.frame=cadre_history
-        self.frame.inner.configure(bg='red')
-        self.frame.canvas.configure(bg=theme[0])
-        self.client=client
-        self.login=login
-        self.i=0
-
-    def run(self):
-        while self.stop==False:
-            try:
-                msg=reciveMsg(client,2048,theType=bytes)
-            except:
-                self.stop=True
-
-            if self.stop==True:
-                break
-            if msg != b'':
-                    msg=str(config.rsa.decrypt(msg))[2:-1]
-                    a=msg.split(";")
-                    if a[0]=="<|MESSAGE|>":
-                        a=msg.split("<|MESSAGE|>")
-                        del a[0]
-                        for line in a:
-                            content=line.split(";")
-                            del content[0]
-                            if content[0]==self.login:
-                                Message(self.frame,text="You : "+content[1], justify='right',font=("Corbel",config.configDic["POLICE"],"bold"),aspect=250,bg="#3e4047").grid(row=self.i,column=0,sticky=E)
-                            else:
-                                Message(self.frame,text=content[0]+" : "+content[1],font=("Corbel",config.configDic["POLICE"],"bold"),aspect=250,bg="#3e4047").grid(row=self.i,column=0,sticky=W)
-                            self.frame.update_idletasks()
-                            self.i = self.i+1
-                    else:
-                        pass
-#=================================================
 class def_gif(Label):
         def __init__(self, master, filename, speed): #définit speed
                 self.speed = speed
@@ -84,7 +46,54 @@ class def_gif(Label):
             # permet de faire une sorte de boucle allant de 1 à nombre max d'image
             self['image'] = self.frames[self.frame] #intégre l'image dans les options
             self.after(self.speed, self._animate) #fait attendre (vitesse) et appelle la fonction animate
+#=================================================
+class thread_message(threading.Thread):
+    def __init__(self,cadre_history,client,login,theme):
+        threading.Thread.__init__(self)
+        self.stop=False
+        self.frame=cadre_history
+        self.client=client
+        self.login=login
+        self.i=0
+        self.frame.tag_add('right',END,END)
+        self.frame.tag_config('right',justify=RIGHT)
+        self.frame.tag_add('left',END,END)
+        self.frame.tag_config('left',justify=LEFT)
+        self.frame.tag_add('login',END,END)
+        self.frame.tag_config('login',underline=1)
+        self.frame.tag_config('login',font=("Corbel",config.configDic["POLICE"]+1,"bold"))
+        self.frame.configure(state=DISABLED)
+        
+    def run(self):        
+        while self.stop==False:
+            try:
+                msg=reciveMsg(client,2048,theType=bytes)
+            except:
+                self.stop=True
 
+            if self.stop==True:
+                break
+            if msg != b'':
+                    msg=str(config.rsa.decrypt(msg))[2:-1]
+                    a=msg.split(";")
+                    if a[0]=="<|MESSAGE|>":
+                        a=msg.split("<|MESSAGE|>")
+                        del a[0]
+                        for line in a:
+                            content=line.split(";")
+                            del content[0]
+                            self.frame.configure(state=NORMAL)
+                            if content[0]==self.login:
+                                    self.frame.insert(END,"Vous :"+"\n",['right','login'])
+                                    self.frame.insert(END,content[1]+"\n"+"\n",['right'])
+
+                            else:
+                                    self.frame.insert(END,content[0]+" :"+"\n",['left','login'])
+                                    self.frame.insert(END,content[1]+"\n"+"\n",['left'])
+                            self.frame.configure(state=DISABLED)
+                            self.frame.update_idletasks()
+                    else:
+                        pass
 #DEFINITION DES FONCTIONS=========================
 def init():
     if os.path.exists("Data/Client/config.cfg") and os.path.isfile("Data/Client/config.cfg"):
@@ -520,18 +529,16 @@ def chat_screen(theme,login):
     send.pack(side=RIGHT,fill='both',expand=1)
     #envoi des message
     send.bind('<Return>', send_message)
+    
     #cadre de l'historique
-    cadre_history1= Frame(cadre_principal, bg=theme[1])
-    cadre_history1.pack(side=BOTTOM,fill='both',expand=1)
-    cadre_history= VerticalScrolledFrame(cadre_history1, bg=theme[1])
-    cadre_history.pack(side=BOTTOM,fill='both',expand=True)
+    cadre_history= ScrollText(cadre_principal,pady=10,padx=10,wrap=WORD,bd=0,bg=theme[0],fg=theme[1],font=("Corbel",13,"bold"))
+    cadre_history.pack(side=BOTTOM,fill='both',expand=1)
     reception_msg = thread_message(cadre_history,client,login,theme)
     reception_msg.start()
     #envoie d'une demande d'historique au serveur
     client.send(config.rsa.encrypt(bytes('<|HISTORIQUE|>',"UTF-8")))
     fen.mainloop()
-#CLASSES==========================================
-
+    
 #PROGRAMME PRINCIPAL==============================
 config,theme = init()
 while stop == False:

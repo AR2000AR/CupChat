@@ -421,7 +421,7 @@ def chat_screen(theme,login):
         titre_barre=Label(frame_barre,fg=theme[1],font=("MV-Boli",'11',"bold"),text="Taille de la police :",bg=theme[0])
         titre_barre.pack(anchor=NW)
         val2 = IntVar()
-        barre=Scale(frame_barre,bd=0,variable=val2,activebackground=theme[0],relief=FLAT, orient='horizontal',highlightthickness=0,from_=13, to=19,resolution=1, tickinterval=2,bg=theme[0],fg=theme[1],font=("MV-Boli","12","bold"),command=police )
+        barre=Scale(frame_barre,bd=0,variable=val2,activebackground=theme[0],relief=FLAT, orient='horizontal',highlightthickness=0,from_=10, to=19,resolution=1, tickinterval=2,bg=theme[0],fg=theme[1],font=("MV-Boli","12","bold"),command=police )
         barre.pack(fill='x')
         frame_test=Frame(frame_o,bg=theme[0])
         frame_test.pack()

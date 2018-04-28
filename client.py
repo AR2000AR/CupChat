@@ -62,9 +62,11 @@ class thread_message(threading.Thread):
         self.frame.tag_add('login',END,END)
         self.frame.tag_config('login',underline=1)
         self.frame.tag_config('login',font=("Corbel",config.configDic["POLICE"]+1,"bold"))
+        self.frame.tag_config('login',foreground=theme[2])
         self.frame.configure(state=DISABLED)
         
-    def run(self):        
+    def run(self):
+            
         while self.stop==False:
             try:
                 msg=reciveMsg(client,2048,theType=bytes)
@@ -85,15 +87,19 @@ class thread_message(threading.Thread):
                             self.frame.configure(state=NORMAL)
                             if content[0]==self.login:
                                     self.frame.insert(END,"Vous :"+"\n",['right','login'])
-                                    self.frame.insert(END,content[1]+"\n"+"\n",['right'])
+                                    del content[0]
+                                    self.frame.insert(END,fusion(content,';')+"\n"+"\n",['right'])
 
                             else:
                                     self.frame.insert(END,content[0]+" :"+"\n",['left','login'])
-                                    self.frame.insert(END,content[1]+"\n"+"\n",['left'])
+                                    del content[0]
+                                    self.frame.insert(END,fusion(content,';')+"\n"+"\n",['left'])
                             self.frame.configure(state=DISABLED)
+                            self.frame.yview(MOVETO,1)
                             self.frame.update_idletasks()
                     else:
                         pass
+             
 #DEFINITION DES FONCTIONS=========================
 def init():
     if os.path.exists("Data/Client/config.cfg") and os.path.isfile("Data/Client/config.cfg"):
@@ -114,14 +120,24 @@ def init():
     setdefaulttimeout(2)
 
     if config.configDic["THEME"]==0:
-        theme=["#60636d",'#edf0f9','Data/Client/image/cup-nuit.gif',"Data/Client/image/roue.gif"]
+        theme=["#60636d",'#edf0f9','#3d436d','Data/Client/image/cup-nuit.gif',"Data/Client/image/roue.gif"]
     elif config.configDic["THEME"]==1:
-        theme=["white","black",'Data/Client/image/cup-jour.gif',"Data/Client/image/roue.gif"]
+        theme=["white","black",'#57609b','Data/Client/image/cup-jour.gif',"Data/Client/image/roue.gif"]
 
     #Prépare le chiffrement
     config.rsa = Crypto()
 
     return config,theme
+
+def fusion(liste,sep):
+    tmp=liste[0]
+    del liste[0]
+    try:
+        for item in liste:
+            tmp=tmp+sep+item
+    except:
+        pass
+    return tmp
 
 def clean_end():
     global fen,client,reception_msg,config,stop
@@ -305,7 +321,7 @@ def login_screen(theme):
         id_connect_memo()
         return client,login
     else:
-        logo= PhotoImage(file=theme[2])
+        logo= PhotoImage(file=theme[3])
         titre= Label(fen, text="CupChat", bg=theme[0],fg=theme[1],font=('Helvetica','80','bold'),image=logo, compound =LEFT)
         titre.place(anchor=N ,relx=0.5, rely=0.1)
         #frame contenant la partie de l'identification
@@ -411,9 +427,9 @@ def chat_screen(theme,login):
             global fen_o,val,fen,reception_msg
             config.setConf("int","THEME",val.get())
             if config.configDic["THEME"]==0:
-                theme=["#60636d",'#edf0f9','Data/Client/image/cup-nuit.gif',"Data/Client/image/roue.gif"]
+                theme=["#60636d",'#edf0f9','#3d436d','Data/Client/image/cup-nuit.gif',"Data/Client/image/roue.gif"]
             elif config.configDic["THEME"]==1:
-                theme=["white","black",'Data/Client/image/cup-jour.gif',"Data/Client/image/roue.gif"]
+                theme=["white","black",'#57609b','Data/Client/image/cup-jour.gif',"Data/Client/image/roue.gif"]
             config.setConf("int","POLICE",val2.get())
             fen_o.destroy()
             fen.destroy()
@@ -450,12 +466,12 @@ def chat_screen(theme,login):
             bouton_deconnect.configure(bg="#840f0f")
 
         frame_o=Frame(fen_o,bg=theme[0])
-        frame_o.pack(anchor=NW,fill='both',expand=1,pady=5,padx=5)
+        frame_o.pack(anchor=NW,fill=BOTH,expand=1,pady=5,padx=5)
         #option switch jour nuit
         frame_theme1=Label(frame_o,fg=theme[1],font=("MV-Boli","11","bold"),text="Théme : ",bg=theme[0])
         frame_theme1.pack(anchor=NW)
         frame_theme=Frame(frame_o,bg=theme[0],pady=5,padx=5)
-        frame_theme.pack(anchor=NW,fill='x')
+        frame_theme.pack(anchor=NW,fill=X)
         val = IntVar()
         val.set(config.configDic["THEME"])
         n = Radiobutton(frame_theme,width=10, variable=val,pady=3,offrelief=FLAT, text="Nuit",selectcolor="#2e3459",font=("","13","bold"), value=0,indicatoron=0,bg="#2e3459",fg='#edf0f9',relief=FLAT)
@@ -464,12 +480,12 @@ def chat_screen(theme,login):
         j.pack(side=LEFT,expand=1)
         #option taille du texte
         frame_barre=Frame(frame_o,bg=theme[0],pady=20)
-        frame_barre.pack(fill='x')
+        frame_barre.pack(fill=X)
         titre_barre=Label(frame_barre,fg=theme[1],font=("MV-Boli",'11',"bold"),text="Taille de la police :",bg=theme[0])
         titre_barre.pack(anchor=NW)
         val2 = IntVar()
         barre=Scale(frame_barre,bd=0,variable=val2,activebackground=theme[0],relief=FLAT, orient='horizontal',highlightthickness=0,from_=10, to=19,resolution=1, tickinterval=2,bg=theme[0],fg=theme[1],font=("MV-Boli","12","bold"),command=police )
-        barre.pack(fill='x')
+        barre.pack(fill=X)
         frame_test=Frame(frame_o,bg=theme[0])
         frame_test.pack()
         titre_test=Label(frame_test,fg=theme[1],font=("MV-Boli",config.configDic["POLICE"],"bold"),text="Test",bg=theme[0])
@@ -479,12 +495,12 @@ def chat_screen(theme,login):
         frame_bouton_option.place(anchor=SE,relx=1.0, rely=1.0)
         #bouton pour enregistrer
         bouton_save = Button(frame_bouton_option,text="Save",command=save_option, relief=FLAT,bg="#525a8e",fg='white',font="40",activebackground="#57609b",bd=0)
-        bouton_save.pack(side='right')
+        bouton_save.pack(side=RIGHT)
         bouton_save.bind('<Enter>',hover_s)
         bouton_save.bind('<Leave>',leave_s)
         #bouton pour annuler
         frame_bouton1_option=Frame(frame_bouton_option,padx=4,bg=theme[0])
-        frame_bouton1_option.pack(side='right',expand=1)
+        frame_bouton1_option.pack(side=RIGHT,expand=1)
         bouton_annuler = Button(frame_bouton1_option, text="Annuler",command=gogogo, relief=FLAT,bg="#525a8e",fg='white',font="40",activebackground="#57609b",bd=0)
         bouton_annuler.pack()
         bouton_annuler.bind('<Enter>',hover_a)
@@ -503,36 +519,36 @@ def chat_screen(theme,login):
     fen.minsize(width=600, height=500)
     #panneau latéral
     paneau_lateral= Frame(fen, bg="#3e4047",width=70)
-    paneau_lateral.pack(fill='y',side=LEFT)
+    paneau_lateral.pack(fill=Y,side=LEFT)
     #espace pour le nom du serveur
     paneau_serv= Frame(paneau_lateral,bg="#3e4047",width=70)
-    paneau_serv.pack(fill='y',side=LEFT)
+    paneau_serv.pack(fill=Y,side=LEFT)
     # bouton des option
-    roue= PhotoImage(file=theme[3])
+    roue= PhotoImage(file=theme[4])
     cadre_option= Frame(paneau_lateral, bg="#3e4047")
-    cadre_option.pack(side=BOTTOM,fill='x')
+    cadre_option.pack(side=BOTTOM,fill=X)
     boutton_option= Button(cadre_option, bg="#3e4047",text="option",fg=theme[1],font=("MV-Boli","11","bold"),pady=6,padx=7,image=roue,relief=FLAT,activebackground="#3e4047",bd=0,command=fen_option)
     boutton_option.pack(side=RIGHT)
     #cadre des messages
     cadre_principal= Frame(fen, bg="pink",width=500)
-    cadre_principal.pack(expand=1, fill='both',side=LEFT)
+    cadre_principal.pack(expand=1, fill=BOTH,side=LEFT)
     #envoi des message
     value = StringVar().set("")
     #cadre de l'envoie des message
     cadre_message= Frame(cadre_principal, bg=theme[0],pady=12,padx=12)
-    cadre_message.pack(side=BOTTOM,fill='x' )
+    cadre_message.pack(side=BOTTOM,fill=X)
     cadre_message1= Frame(cadre_principal, bg=theme[0],pady=12,padx=12)
-    cadre_message1.pack(side=BOTTOM,fill='x' )
+    cadre_message1.pack(side=BOTTOM,fill=X)
     bouton_envoyer= Button(cadre_message1, bg="#747987",text="Envoyer",fg=theme[1],font=("MV-Boli","11","bold"),pady=6,padx=7,command=send_message, relief=FLAT,activebackground="#747987", bd=0)#,image=fléche
     bouton_envoyer.pack(side=RIGHT)
     send = Entry(cadre_message1, textvariable=value,relief=FLAT,font=("MV-Boli","15"),bg='#747987', width=30)
-    send.pack(side=RIGHT,fill='both',expand=1)
+    send.pack(side=RIGHT,fill=BOTH,expand=1)
     #envoi des message
     send.bind('<Return>', send_message)
     
     #cadre de l'historique
-    cadre_history= ScrollText(cadre_principal,pady=10,padx=10,wrap=WORD,bd=0,bg=theme[0],fg=theme[1],font=("Corbel",13,"bold"))
-    cadre_history.pack(side=BOTTOM,fill='both',expand=1)
+    cadre_history= ScrollText(cadre_principal,pady=10,padx=10,wrap=WORD,bd=0,bg=theme[0],fg='#b6bac4',font=("Corbel",13,"bold"))
+    cadre_history.pack(side=BOTTOM,fill=BOTH,expand=1)
     reception_msg = thread_message(cadre_history,client,login,theme)
     reception_msg.start()
     #envoie d'une demande d'historique au serveur

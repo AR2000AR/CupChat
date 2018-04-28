@@ -3,10 +3,12 @@
 #############################
 import os
 import hashlib
+from Crypto import Random
 #============================
 class Account():
     def __init__(self,file=""):
         self._file=""
+        self._random = Random.new()
         if file != "":
             self.openFile(file)
 
@@ -18,8 +20,8 @@ class Account():
         with open(self._file,"r") as db:
             for item in db:
                 item=item.split(";")
-                if item[0]==name:
-                    if item[1].strip()==hashlib.md5(password.encode()).hexdigest():
+                if item[0]==hashlib.md5(name.encode()).hexdigest():
+                    if item[2].strip()==hashlib.md5(item[1].encode()+password.encode()).hexdigest():
                         return True
             return False
         
@@ -27,7 +29,7 @@ class Account():
         with open(self._file,"r") as db:
             for item in db:
                 item=item.split(";")
-                if item[0]==name:
+                if item[0]==hashlib.md5(name.encode()).hexdigest():
                     return True
             return False
 
@@ -36,7 +38,8 @@ class Account():
             return False
         else:
             with open(self._file,"a") as db:
-                db.write(name+";"+hashlib.md5(password.encode()).hexdigest()+"\n")
+                salt=self._random.read(128).hex()
+                db.write(hashlib.md5(name.encode()).hexdigest()+";"+salt+";"+hashlib.md5(salt.encode()+password.encode()).hexdigest()+"\n")
             return True
 
     def statu(self):
@@ -45,3 +48,5 @@ class Account():
         else:
             return "OK"
                 
+if __name__ == "__main__":
+    a=Account("t.db")

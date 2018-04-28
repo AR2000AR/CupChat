@@ -89,7 +89,7 @@ class ClientThread(threading.Thread):
                         msg=msg.split(";")
                         ###Envoi de messages
                         if msg[0]=="<|MESSAGE|>":
-                            self.h.write(msg[1]+";"+msg[2])
+                            self.h.write(msg[1]+";"+fusion(msg[2:len(msg)]))
                             self.clients.sendAll("<|MESSAGE|>;"+msg[1]+";"+msg[2])
 
                         ###Envoi de l'historique
@@ -209,6 +209,16 @@ def init():
             config.log.write("CONFIG",item+":"+str(config.configDic[item]))
     ###Renvoie le résultat de l'initialisation
     return server,account,clients,config
+#=================================================
+def fusion(liste,sep=";"):
+    tmp=liste[0]
+    del liste[0]
+    try:
+        for item in liste:
+            tmp=tmp+sep+item
+    except:
+        pass
+    return tmp
 #=================================================
 #=================================================
 server,account,clients,config = init()#Initialise le serveur

@@ -163,7 +163,7 @@ def login_screen(theme):
         global wrong,login
         wrong=0
         disable()
-        if new=="Memo":
+        if new=="Memo" and wrong==0:
             login=config.configDic["LOGIN"]
             password=config.configDic["PASSWORD"]
         else:
@@ -193,7 +193,7 @@ def login_screen(theme):
                 fen.destroy()
                 password=""
                 identification(new)
-            elif new=="Memo":
+            elif new=="Memo" and wrong==0:
                 client.send(config.rsa.encrypt(bytes('<|ACCOUNT|>;<|AUTH|>;'+login+";"+password,"UTF-8")))
                 fen.destroy()
                 password=""
@@ -254,7 +254,7 @@ def login_screen(theme):
     #gif.pack_forget()
     #titre principal page d'accueil et logo
 
-    if not config.configDic["LOGIN"]=="False" and not config.configDic["PASSWORD"]=="False":
+    if wrong==0 and not config.configDic["LOGIN"]=="False" and not config.configDic["PASSWORD"]=="False":
         id_connect_memo()
         return client,login
     else:

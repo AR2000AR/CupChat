@@ -120,9 +120,9 @@ def init():
     setdefaulttimeout(2)
 
     if config.configDic["THEME"]==0:
-        theme=["#60636d",'#edf0f9','#3d436d','Data/Client/image/cup-nuit.gif',"Data/Client/image/roue.gif"]
+        theme=["#60636d",'#edf0f9','#3d436d','Data/Client/image/cup-nuit.gif',"Data/Client/image/roue.gif","Data/Client/image/gif-jour.gif"]
     elif config.configDic["THEME"]==1:
-        theme=["white","black",'#57609b','Data/Client/image/cup-jour.gif',"Data/Client/image/roue.gif"]
+        theme=["white","black",'#57609b','Data/Client/image/cup-jour.gif',"Data/Client/image/roue.gif","Data/Client/image/gif-jour.gif"]
 
     #Prépare le chiffrement
     config.rsa = Crypto()
@@ -274,8 +274,8 @@ def login_screen(theme):
     #======================================================================================================
     fen = build_fen("Connection",theme)
     fen.minsize(width=650, height=550)
-    #gif = def_gif(fen, filename='Data/Client/image/gif-nuit.gif', speed=40)
-    #gif.pack()
+    gif = def_gif(fen, filename=theme[5], speed=40)
+    gif.pack()
     fen.focus_force()
     fen.update_idletasks()
     try:
@@ -314,7 +314,7 @@ def login_screen(theme):
         return False
 
     #Si la connection a réusie=============================================================================
-    #gif.pack_forget()
+    gif.pack_forget()
     #titre principal page d'accueil et logo
 
     if wrong==0 and not config.configDic["LOGIN"]=="False" and not config.configDic["PASSWORD"]=="False":
@@ -363,10 +363,9 @@ def login_screen(theme):
         fbouton_espace= Frame(fbouton, bg=theme[0], pady=20)
         fbouton_espace.pack()
         #frames pour espacer entre les boutons espace entre les boutons
-        frame_espace1=Frame(fbouton, pady=5, bg=theme[0])
-        frame_espace1.pack()
         frame_espace2=Frame(fbouton, pady=5, bg=theme[0])
-        frame_espace2.pack()
+        frame_espace2.pack()        frame_espace1=Frame(fbouton, pady=5, bg=theme[0])
+        frame_espace1.pack()
         frame_espace3=Frame(fbouton, pady=5, bg=theme[0])
         frame_espace3.pack()
         #bouton pour se connecter
@@ -545,9 +544,8 @@ def chat_screen(theme,login):
     send.pack(side=RIGHT,fill=BOTH,expand=1)
     #envoi des message
     send.bind('<Return>', send_message)
-    
     #cadre de l'historique
-    cadre_history= ScrollText(cadre_principal,pady=10,padx=10,wrap=WORD,bd=0,bg=theme[0],fg='#b6bac4',font=("Corbel",13,"bold"))
+    cadre_history= ScrollText(cadre_principal,pady=10,padx=10,wrap=WORD,bd=0,bg=theme[0],fg='#b6bac4',font=("Corbel",config.configDic["POLICE"],"bold"))
     cadre_history.pack(side=BOTTOM,fill=BOTH,expand=1)
     reception_msg = thread_message(cadre_history,client,login,theme)
     reception_msg.start()

@@ -364,7 +364,8 @@ def login_screen(theme):
         fbouton_espace.pack()
         #frames pour espacer entre les boutons espace entre les boutons
         frame_espace2=Frame(fbouton, pady=5, bg=theme[0])
-        frame_espace2.pack()        frame_espace1=Frame(fbouton, pady=5, bg=theme[0])
+        frame_espace2.pack()
+        frame_espace1=Frame(fbouton, pady=5, bg=theme[0])
         frame_espace1.pack()
         frame_espace3=Frame(fbouton, pady=5, bg=theme[0])
         frame_espace3.pack()

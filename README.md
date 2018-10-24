@@ -12,7 +12,7 @@ Télécharger le script correspondant (CTRL+S), exécutez le et suivez les instr
 **/!\ Attention ne marche sur Windows que si le module pycrypto est installé /!\\**
 
 ## Documentation
-[Crypto](https://pythonhosted.org/pycrypto/) (fonctionait)  
+[Crypto](https://pythonhosted.org/pycrypto/) (fonctionnait)  
 [hashlib](https://docs.python.org/3.6/library/hashlib.html)
 
 ## Sources
